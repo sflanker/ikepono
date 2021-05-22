@@ -3,6 +3,10 @@ ikepono
 
 'ike pono is a pipeline for identifying in-species individuals in photo catalogs. 
 
+Requires Detectron2 / Pytorch / Opencv
+
+Environment on Alienware 51: `Detectron2`
+
 Project Organization
 ------------
 
