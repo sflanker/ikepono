@@ -7,7 +7,7 @@ name = "ikepono"
 dynamic = ["version"]
 description = ''
 readme = "README.md"
-requires-python = "=3.11"
+requires-python = "==3.11.*"
 license = "MIT"
 keywords = []
 authors = [
