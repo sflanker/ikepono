@@ -27,8 +27,14 @@ dependencies = [
   "nbconvert",
   "pytorch-metric-learning",
   "azure-core",
-  "azure-cli"
+  "azure-cli",
+  "scikit-learn",
+  "mlflow",
+  #"pycotools"
 ]
+
+[tool.hatch.envs.default]
+python = "3.11"
 
 [project.urls]
 Documentation = "https://github.com/lobrien/ikepono#readme"
