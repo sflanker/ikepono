@@ -1,0 +1,19 @@
+name: ikepono-gpu
+channels:
+  - conda-forge
+dependencies:
+  - nbconvert
+  - torchaudio
+  - pycocotools
+  - mlflow
+  - jupytext
+  - cuda-version=12
+  - pytorch-cuda=12.1
+  - faiss-gpu
+  - jupyterlab
+  - python=3.11
+  - scikit-learn
+  - cuda-cudart
+  - torchvision
+  - pytorch
+prefix: /home/lobrien/mambaforge/envs/ikepono-gpu
