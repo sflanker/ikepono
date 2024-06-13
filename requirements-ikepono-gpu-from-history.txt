@@ -1,0 +1,13 @@
+name: ikepono-gpu
+channels:
+  - conda-forge
+dependencies:
+  - mlflow
+  - jupytext
+  - python=3.11
+  - scikit-learn
+  - nbconvert
+  - faiss-gpu
+  - jupyterlab
+  - pytorch-metric-learning
+prefix: /home/lobrien/mambaforge/envs/ikepono-gpu
