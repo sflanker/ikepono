@@ -3,6 +3,7 @@ import errno
 import os
 import time
 from collections import defaultdict, deque
+import mlflow
 
 import torch
 import torch.distributed as dist
@@ -193,6 +194,7 @@ class MetricLogger:
                             i, len(iterable), eta=eta_string, meters=str(self), time=str(iter_time), data=str(data_time)
                         )
                     )
+
             i += 1
             end = time.time()
         total_time = time.time() - start_time

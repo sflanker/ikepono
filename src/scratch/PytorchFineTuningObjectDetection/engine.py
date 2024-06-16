@@ -2,6 +2,7 @@ import math
 import sys
 import time
 
+import mlflow
 import torch
 import torchvision.models.detection.mask_rcnn
 import utils
@@ -54,6 +55,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, sc
         if lr_scheduler is not None:
             lr_scheduler.step()
 
+        mlflow.log_metric("loss", losses_reduced.item(), step=epoch)
         metric_logger.update(loss=losses_reduced, **loss_dict_reduced)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
@@ -73,7 +75,7 @@ def _get_iou_types(model):
 
 
 @torch.inference_mode()
-def evaluate(model, data_loader, device):
+def evaluate(model, data_loader, epoch, device):
     n_threads = torch.get_num_threads()
     # FIXME remove this and make paste_masks_in_image run on the GPU
     torch.set_num_threads(1)
@@ -84,7 +86,7 @@ def evaluate(model, data_loader, device):
 
     coco = get_coco_api_from_dataset(data_loader.dataset)
     iou_types = _get_iou_types(model)
-    coco_evaluator = CocoEvaluator(coco, iou_types)
+    coco_evaluator = CocoEvaluator(coco, iou_types, epoch)
 
     for images, targets in metric_logger.log_every(data_loader, 100, header):
         images = list(img.to(device) for img in images)
