@@ -22,8 +22,8 @@ class MockTrainingResults:
     training_end = "2024-01-01T00:00:00"
 
 
-def train(train_images_dir : Path, val_images_dir : Path, configuration : Dict[str, Any]) -> TrainingResults:
-    print(f"Training model with images from {train_images_dir}")
+def build_and_train(train_images_dir : Path, val_images_dir : Path, configuration : Dict[str, Any]) -> TrainingResults:
+    print(f"Building and training model with images from {train_images_dir}")
     model_configuration, train_configuration = split_configuration(configuration)
     model = training_model(model_configuration)
     train_dataset = image_tensor_dataset(train_images_dir)
