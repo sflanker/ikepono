@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict, Any, Tuple
 from torch import Model, Dataset
 from dataclasses import dataclass
+from datetime import datetime
 
 class MockModel(Model):
     def __init__(self, model_configuration: Dict[str, Any]):
@@ -12,15 +13,24 @@ class MockDataset(Dataset):
         self.images_dir = images_dir
 
 @dataclass
-class MockTrainingResults:
+class TrainingResults:
     model: Model
-    epochs = 10
-    precision = 0.9
-    recall = 0.9
-    f1 = 0.9
-    training_start = "2024-01-01T00:00:00"
+    epochs : int
+    precision : float
+    recall : float
+    f1 : float
+    training_start = datetime
     training_end = "2024-01-01T00:00:00"
 
+class MockTrainingResults(TrainingResults):
+    def __init__(self, model: Model):
+        self.model = model
+        self.epochs = 10
+        self.precision = 0.9
+        self.recall = 0.9
+        self.f1 = 0.9
+        self.training_start = datetime.strptime("2024-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
+        self.training_end = datetime.strptime("2024-01-01T00:00:00", "%Y-%m-%dT%H:%M:%S")
 
 def build_and_train(train_images_dir : Path, val_images_dir : Path, configuration : Dict[str, Any]) -> TrainingResults:
     print(f"Building and training model with images from {train_images_dir}")
