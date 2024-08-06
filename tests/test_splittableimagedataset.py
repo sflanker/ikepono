@@ -49,7 +49,8 @@ class SplittableImageDatasetTests(unittest.TestCase):
         self.assertEqual('Akari', dataset.labels[dataset.test_indices[0]])
 
     def test_transform(self):
-        dataset = SplittableImageDataset(root_dir=self.data_dir, k=7, transform=transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()]))
+        xform = SplittableImageDataset.standard_transform()
+        dataset = SplittableImageDataset(root_dir=self.data_dir, k=7, transform=xform)
         image, label_idx, path = dataset[0]
         self.assertEqual(torch.Size([3, 224, 224]), image.size())
         self.assertEqual(0, label_idx)
