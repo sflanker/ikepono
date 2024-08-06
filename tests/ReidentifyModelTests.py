@@ -6,7 +6,6 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.ikepono.ReidentifyModel import _init_weights, ReidentifyModel
 
-
 class ReidentifyModelTests(unittest.TestCase):
     def test_initialize_weights_linear(self):
         # Create a linear layer with input size 100 and output size 100
@@ -58,6 +57,23 @@ class ReidentifyModelTests(unittest.TestCase):
         assert reidentify_model.dropout == 0.5
         assert reidentify_model.hidden_units == 512
         assert reidentify_model.device == torch.device("cuda:0")
+
+    def test_forward(self):
+        model_configuration = {
+            "backbone": "resnet18",
+            "pretrained": True,
+            "freeze": True,
+            "cut": -1,
+            "backbone_output_dim": 512,
+            "out_features": 100,
+            "dropout": 0.5,
+            "hidden_units": 512,
+            "device": "cuda:0"
+        }
+        reidentify_model = ReidentifyModel(model_configuration)
+        img_tensor = torch.randn(32, 3, 224, 224).to(torch.device(model_configuration["device"]))
+        embedding = reidentify_model(img_tensor)
+        assert embedding.shape == (32, 100)
 
 
 if __name__ == '__main__':
