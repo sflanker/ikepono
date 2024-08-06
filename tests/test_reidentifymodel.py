@@ -43,7 +43,7 @@ class ReidentifyModelTests(unittest.TestCase):
             "freeze": True,
             "cut": -1,
             "backbone_output_dim": 512,
-            "out_features": 100,
+            "output_vector_size": 100,
             "dropout": 0.5,
             "hidden_units": 512,
             "device": self.torch_device
@@ -54,9 +54,10 @@ class ReidentifyModelTests(unittest.TestCase):
         assert reidentify_model.freeze == True
         assert reidentify_model.cut == -1
         assert reidentify_model.backbone_output_dim == 512
-        assert reidentify_model.out_features == 100
+        assert reidentify_model.output_vector_size == 100
         assert reidentify_model.dropout == 0.5
         assert reidentify_model.hidden_units == 512
+        assert reidentify_model.output_vector_size == 100
         assert reidentify_model.device == torch.device(model_configuration["device"])
 
     def test_forward(self):
@@ -66,7 +67,7 @@ class ReidentifyModelTests(unittest.TestCase):
             "freeze": True,
             "cut": -1,
             "backbone_output_dim": 512,
-            "out_features": 100,
+            "output_vector_size": 100,
             "dropout": 0.5,
             "hidden_units": 512,
             "device": self.torch_device

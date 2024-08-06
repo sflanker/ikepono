@@ -6,6 +6,7 @@
     "cut": -1,
     "dropout": 0.5,
     "hidden_units": 512,
+    "output_vector_size": 128,
     "device": "cpu"
   },
   "train": {

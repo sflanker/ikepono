@@ -19,7 +19,7 @@ class ReidentifyModel(nn.Module):
         self.freeze = model_configuration["freeze"]
         self.cut = model_configuration["cut"]
         self.backbone_output_dim = model_configuration["backbone_output_dim"]
-        self.out_features = model_configuration["out_features"]
+        self.output_vector_size = model_configuration["output_vector_size"]
         self.dropout = model_configuration["dropout"]
         self.hidden_units = model_configuration["hidden_units"]
         self.device = torch.device(model_configuration["device"])
@@ -30,7 +30,7 @@ class ReidentifyModel(nn.Module):
         else:
             self.backbone.requires_grad_(not self.freeze)
         self.backbone = nn.Sequential(*list(self.backbone.children())[:self.cut]).to(self.device)
-        self.projection = self._create_head(self.backbone_output_dim, self.out_features).to(self.device)
+        self.projection = self._create_head(self.backbone_output_dim, self.hidden_units, self.output_vector_size).to(self.device)
         _init_weights(self.projection)
 
     def forward(self, img_tensor: torch.Tensor) -> torch.Tensor:
@@ -39,13 +39,13 @@ class ReidentifyModel(nn.Module):
 
         return embedding
 
-    def _create_head(self, backbone_output_dim, out_features):
+    def _create_head(self, backbone_output_dim, hidden_units, output_vector_size):
          return nn.Sequential(
-            nn.Linear(backbone_output_dim, backbone_output_dim),
+            nn.Linear(backbone_output_dim, hidden_units),
             nn.Sigmoid(),
             nn.Dropout(self.dropout),
-            nn.Linear(backbone_output_dim, self.hidden_units),
+            nn.Linear(hidden_units, hidden_units),
             nn.Sigmoid(),
             nn.Dropout(self.dropout),
-            nn.Linear(self.hidden_units, out_features)
+            nn.Linear(self.hidden_units, output_vector_size)
         )
