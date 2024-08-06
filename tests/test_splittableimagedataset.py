@@ -3,11 +3,20 @@ import torch.nn as nn
 import torch
 import sys
 import os
+import platform
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.ikepono.ReidentifyModel import SplittableImageDataset
+from src.ikepono.SplittableImageDataset import SplittableImageDataset
+
 
 class SplittableImageDatasetTests(unittest.TestCase):
-    data_dir = "/mnt/d/scratch_data/mantas/by_name/kona"
+
+    def setUp(self):
+        if platform.system() == "Darwin":  # macOS
+            self.data_dir = os.path.join("/Users", "lobrien", "Dropbox", "shared_src", "mantas", "by_name", "kona")
+        elif platform.system() == "Windows":
+            self.data_dir = os.path.join("D:", "scratch_data", "mantas", "by_name", "kona")
+        else:
+            raise RuntimeError(f"Unsupported operating system: {platform.system()}")
 
     def test_k_over_5(self):
         assert False

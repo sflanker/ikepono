@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from src.ikepono.ReidentifyModel import _init_weights, ReidentifyModel
 
 class ReidentifyModelTests(unittest.TestCase):
+    torch_device = torch.device("cuda:0" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_built() else "cpu")
     def test_initialize_weights_linear(self):
         # Create a linear layer with input size 100 and output size 100
         linear_layer = nn.Linear(100, 100)
@@ -45,7 +46,7 @@ class ReidentifyModelTests(unittest.TestCase):
             "out_features": 100,
             "dropout": 0.5,
             "hidden_units": 512,
-            "device": "cuda:0"
+            "device": self.torch_device
         }
         reidentify_model = ReidentifyModel(model_configuration)
         assert reidentify_model.backbone_name == "resnet18"
@@ -56,7 +57,7 @@ class ReidentifyModelTests(unittest.TestCase):
         assert reidentify_model.out_features == 100
         assert reidentify_model.dropout == 0.5
         assert reidentify_model.hidden_units == 512
-        assert reidentify_model.device == torch.device("cuda:0")
+        assert reidentify_model.device == torch.device(model_configuration["device"])
 
     def test_forward(self):
         model_configuration = {
@@ -68,7 +69,7 @@ class ReidentifyModelTests(unittest.TestCase):
             "out_features": 100,
             "dropout": 0.5,
             "hidden_units": 512,
-            "device": "cuda:0"
+            "device": self.torch_device
         }
         reidentify_model = ReidentifyModel(model_configuration)
         img_tensor = torch.randn(32, 3, 224, 224).to(torch.device(model_configuration["device"]))
