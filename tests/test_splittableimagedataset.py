@@ -4,6 +4,7 @@ import torch
 import sys
 import os
 import platform
+from torchvision import transforms
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.ikepono.SplittableImageDataset import SplittableImageDataset
 
@@ -46,3 +47,10 @@ class SplittableImageDatasetTests(unittest.TestCase):
         self.assertEqual(183, len(dataset.test_indices))
         self.assertEqual(15, dataset.train_indices[0])
         self.assertEqual('Akari', dataset.labels[dataset.test_indices[0]])
+
+    def test_transform(self):
+        dataset = SplittableImageDataset(root_dir=self.data_dir, k=7, transform=transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()]))
+        image, label_idx, path = dataset[0]
+        self.assertEqual(torch.Size([3, 224, 224]), image.size())
+        self.assertEqual(0, label_idx)
+        self.assertEqual(os.path.join(self.data_dir, 'Akari', 'Akari_20210404_05.jpg'), path)
