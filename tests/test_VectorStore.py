@@ -91,5 +91,16 @@ class VectorStoreTests(unittest.TestCase):
         assert distances[0] == 0.0, f"Expected 0.0, got {distances[0]}"
         assert np.all(distances[1:] > 0.0), f"Expected all distances to be greater than 0.0, got {distances[1:]}"
 
+    def test_get_sources_by_label(self):
+        store = VectorStore(dimension=128)
+        random_vectors = []
+        for i in range(10):
+            random_vector = np.random.rand(128).astype('float32')
+            store.add_vector(random_vector, f"label{i}", f"source{i}")
+            random_vectors.append(random_vector)
+        sources = store.get_sources_by_label("label0")
+        assert sources.shape == (1,), f"Expected (1,), got {sources.shape}"
+        assert sources[0] == "source0", f"Expected 'source0', got {sources[0]}"
+
 if __name__ == '__main__':
     unittest.main()

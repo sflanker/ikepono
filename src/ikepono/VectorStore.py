@@ -59,6 +59,13 @@ class VectorStore:
         else:
             return np.ndarray([])
 
+    def get_sources_by_label(self, label: Any) -> np.ndarray:
+        if label in self.label_to_ids:
+            sources = [self.id_to_source[vector_id] for vector_id in self.label_to_ids[label]]
+            return np.array(sources)
+        else:
+            return np.ndarray([])
+
     def get_all_vectors(self) -> np.ndarray:
         if len(self.vector_store) == 0:
             return np.empty((0, self.dimension), dtype=np.float32)
