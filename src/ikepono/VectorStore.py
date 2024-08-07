@@ -44,10 +44,6 @@ class VectorStore:
         else:
             raise ValueError(f"Source '{source}' not found in the store.")
 
-    def search(self, query_vector: np.ndarray, k: int) -> List[Tuple[float, Any, str]]:
-        distances, indices = self.index.search(np.array([query_vector]).astype('float32'), k)
-        return [(distances[0][i], self.id_to_label[int(indices[0][i])], self.id_to_source[int(indices[0][i])])
-                for i in range(len(indices[0]))]
 
     def get_vector(self, source: str) -> np.ndarray:
         if source in self.source_to_id:
@@ -80,3 +76,12 @@ class VectorStore:
             return np.ndarray([])
         else:
             return np.stack(list(self.source_to_id.keys()))
+
+    def compute_distances(self, query_vector: np.ndarray, vectors: np.ndarray) -> np.ndarray:
+        return np.linalg.norm(vectors - query_vector, axis=1)
+
+    def search(self, query_vector: np.ndarray, k: int) -> List[Tuple[float, Any, str]]:
+        all_vectors = self.get_all_vectors()
+        distances = self.compute_distances(query_vector, all_vectors)
+        indices = np.argsort(distances)[:k]
+        return [(distances[i], self.id_to_label[i], self.id_to_source[i]) for i in indices]

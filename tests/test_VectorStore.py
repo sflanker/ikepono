@@ -77,5 +77,19 @@ class VectorStoreTests(unittest.TestCase):
         all_sources = store.get_all_sources()
         assert np.array_equal(all_sources, [f"source{i}" for i in range(10)]), f"Expected {[f'source{i}' for i in range(10)]}, got {all_sources}"
 
+
+    def test_compute_distances(self):
+        store = VectorStore(dimension=128)
+        random_vectors = []
+        for i in range(10):
+            random_vector = np.random.rand(128).astype('float32')
+            store.add_vector(random_vector, f"label{i}", f"source{i}")
+            random_vectors.append(random_vector)
+        all_vectors = store.get_all_vectors()
+        distances = store.compute_distances(random_vectors[0], all_vectors)
+        assert distances.shape == (10,), f"Expected (10,), got {distances.shape}"
+        assert distances[0] == 0.0, f"Expected 0.0, got {distances[0]}"
+        assert np.all(distances[1:] > 0.0), f"Expected all distances to be greater than 0.0, got {distances[1:]}"
+
 if __name__ == '__main__':
     unittest.main()
