@@ -31,7 +31,7 @@ class SplittableImageDataset(Dataset):
                     full_path = os.path.join(root, file)
                     label = os.path.basename(os.path.dirname(full_path))
 
-                    if class_counts[label] >= k:
+                    if class_counts[label] >= (k + k * test_size):
                         image_paths.append(full_path)
                         labels.append(label)
 
@@ -66,7 +66,7 @@ class SplittableImageDataset(Dataset):
             if n_samples < self.k:  # Minimum 3 for train and 2 for test
                 raise ValueError(f"Class {class_label} has fewer than 5 samples.")
 
-            n_test = max(2, int(n_samples * self.test_size))
+            n_test = int(n_samples * self.test_size)
             n_train = n_samples - n_test
 
             if n_train < 3:
@@ -96,14 +96,18 @@ class SplittableImageDataset(Dataset):
             idx = self.test_indices[idx]
 
         img_path = self.image_paths[idx]
-        image = Image.open(img_path).convert('RGB')
+        pil_image = Image.open(img_path).convert('RGB')
         label = self.labels[idx]
 
         if self.transform:
-            image = self.transform(image)
-
-        image = image.to(self.device)
-        return LabeledImageTensor(image=image, label=self.class_to_idx[label], source=img_path)
+            tensor_image = self.transform(pil_image)
+        else:
+            # Minimum xform is to tensor
+            transform = transforms.Compose([transforms.ToTensor()])
+            tensor_image = transform(pil_image)
+        # Move it on to configuration["dataset_device"]
+        tensor_image = tensor_image.to(self.device)
+        return LabeledImageTensor(image=tensor_image, label=self.class_to_idx[label], source=img_path)
 
     @staticmethod
     def standard_transform():

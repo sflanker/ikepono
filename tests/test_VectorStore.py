@@ -16,7 +16,7 @@ class VectorStoreTests(unittest.TestCase):
     def test_add_vector(self):
         store = VectorStore(dimension=128)
         random_vector = np.random.rand(128).astype('float32')
-        store.add_vector(random_vector, "label1", "source1")
+        store._add_vector(random_vector, "label1", "source1")
         assert store.get_all_vectors().shape == (1, 128), f"Expected (1, dimension), got {store.get_all_vectors().shape}"
         assert store.get_all_labels() == ["label1"]
         assert store.get_all_sources() == ["source1"]
@@ -24,14 +24,14 @@ class VectorStoreTests(unittest.TestCase):
     def test_get_vector(self):
         store = VectorStore(dimension=128)
         random_vector = np.random.rand(128).astype('float32')
-        store.add_vector(random_vector, "label1", "source1")
+        store._add_vector(random_vector, "label1", "source1")
         vector = store.get_vector("source1")
         assert np.allclose(vector, random_vector), f"Expected {random_vector}, got {store.get_vector('source1')}"
     def test_update_vector(self):
         store = VectorStore(dimension=128)
         random_vector = np.random.rand(128).astype('float32')
         random_vector[0] = 0.0
-        store.add_vector(random_vector, "label1", "source1")
+        store._add_vector(random_vector, "label1", "source1")
         store.get_vector("source1")[0] == 0.0, f"Expected 0.0, got {store.get_vector('source1')[0]}"
         random_vector[0] = 1.0
         store.update_vector("source1", random_vector, "label2")
@@ -46,7 +46,7 @@ class VectorStoreTests(unittest.TestCase):
     def test_search(self):
         store = VectorStore(dimension=128)
         random_vector = np.random.rand(128).astype('float32')
-        store.add_vector(random_vector, "label1", "source1")
+        store._add_vector(random_vector, "label1", "source1")
         search_results = store.search(random_vector, 1)
         assert len(search_results) == 1, f"Expected 1, got {len(search_results)}"
         distance, label, source = search_results[0]
@@ -57,7 +57,7 @@ class VectorStoreTests(unittest.TestCase):
     def test_get_vectors_by_label(self):
         store = VectorStore(dimension=128)
         random_vector = np.random.rand(128).astype('float32')
-        store.add_vector(random_vector, "label1", "source1")
+        store._add_vector(random_vector, "label1", "source1")
         vectors = store.get_vectors_by_label("label1")
         assert vectors.shape == (1, 128), f"Expected (1, dimension), got {vectors.shape}"
         assert np.allclose(vectors[0], random_vector), f"Expected {random_vector}, got {vectors[0]}"
@@ -67,7 +67,7 @@ class VectorStoreTests(unittest.TestCase):
         random_vectors = []
         for i in range(10):
             random_vector = np.random.rand(128).astype('float32')
-            store.add_vector(random_vector, f"label{i}", f"source{i}")
+            store._add_vector(random_vector, f"label{i}", f"source{i}")
             random_vectors.append(random_vector)
         all_vectors = store.get_all_vectors()
         assert all_vectors.shape == (10, 128), f"Expected (1, dimension), got {all_vectors.shape}"
@@ -84,7 +84,7 @@ class VectorStoreTests(unittest.TestCase):
         random_vectors = []
         for i in range(10):
             random_vector = np.random.rand(128).astype('float32')
-            store.add_vector(random_vector, f"label{i}", f"source{i}")
+            store._add_vector(random_vector, f"label{i}", f"source{i}")
             random_vectors.append(random_vector)
         all_vectors = store.get_all_vectors()
         distances = store.compute_distances(random_vectors[0], all_vectors)
@@ -97,7 +97,7 @@ class VectorStoreTests(unittest.TestCase):
         random_vectors = []
         for i in range(10):
             random_vector = np.random.rand(128).astype('float32')
-            store.add_vector(random_vector, f"label{i}", f"source{i}")
+            store._add_vector(random_vector, f"label{i}", f"source{i}")
             random_vectors.append(random_vector)
         sources = store.get_sources_by_label("label0")
         assert sources.shape == (1,), f"Expected (1,), got {sources.shape}"

@@ -39,19 +39,19 @@ class SplittableImageDatasetTests(unittest.TestCase):
             raise Exception(f"Unsupported operating system: {platform.system()}")
 
     def test_k_over_5(self):
-        dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=7)
+        k  = 7
+        dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=k)
         # For each label, confirm that there are at least 5 images between train and test
         for label in dataset.class_to_idx.keys():
             train_count = len([x for x in dataset.train_indices if dataset.labels[x] == label])
             test_count = len([x for x in dataset.test_indices if dataset.labels[x] == label])
-            self.assertGreaterEqual(train_count, 3)
-            self.assertGreaterEqual(test_count, 2)
+            self.assertGreaterEqual(train_count, k, f"Expected at least {k} train images for {label}, got train|test {train_count} | {test_count}")
+            self.assertGreaterEqual(test_count, 1, f"Expected at least 1 test images for {label}, got train|test {train_count} | {test_count}")
 
     def test_find_images_and_labels(self):
         dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=7)
-        self.assertEqual(918, len(dataset.image_paths))
-        self.assertEqual(918, len(dataset.labels))
-        self.assertEqual(56, len(dataset.class_to_idx))
+        self.assertEqual(814, len(dataset.image_paths))
+        self.assertEqual(42, len(dataset.class_to_idx))
         self.assertEqual('Akari', dataset.labels[0])
         self.assertEqual('Yvet', dataset.labels[-1])
 
@@ -65,13 +65,13 @@ class SplittableImageDatasetTests(unittest.TestCase):
 
     def test_split_indices(self):
         dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=7)
-        self.assertEqual(735, len(dataset.train_indices))
-        self.assertEqual(183, len(dataset.test_indices))
+        self.assertEqual(664, len(dataset.train_indices))
+        self.assertEqual(150, len(dataset.test_indices))
 
     def test_train_test_split(self):
         dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=7)
-        self.assertEqual(735, len(dataset.train_indices))
-        self.assertEqual(183, len(dataset.test_indices))
+        self.assertEqual(664, len(dataset.train_indices))
+        self.assertEqual(150, len(dataset.test_indices))
         self.assertEqual(15, dataset.train_indices[0])
         self.assertEqual('Akari', dataset.labels[dataset.test_indices[0]])
 

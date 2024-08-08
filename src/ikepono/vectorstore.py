@@ -17,7 +17,7 @@ class VectorStore:
         self.source_to_id: Dict[str, int] = {}
         self.vector_store: Dict[int, np.ndarray] = {}  # Store vectors separately
 
-    def add_vector(self, vector: np.ndarray, label: str, source: str) -> None:
+    def _add_vector(self, vector: np.ndarray, label: str, source: str) -> None:
         vector_id: int = self.id_counter
         vector_array = np.array([vector]).astype('float32')
         if label not in self.label_to_ids:
@@ -35,7 +35,7 @@ class VectorStore:
 
     def add_labeled_image_vectors(self, livs : Iter[LabeledImageEmbedding]) -> None:
         for liv in livs:
-            self.add_vector(liv.embedding, liv.label, liv.source)
+            self._add_vector(liv.embedding, liv.label, liv.source)
 
     def update_vector(self, source: str, new_vector: np.ndarray, new_label: Any = None) -> None:
         if source in self.source_to_id:
