@@ -6,7 +6,7 @@ import os
 import platform
 from torchvision import transforms
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.ikepono.SplittableImageDataset import SplittableImageDataset
+from src.ikepono.splittableimagedataset import SplittableImageDataset
 
 
 class SplittableImageDatasetTests(unittest.TestCase):

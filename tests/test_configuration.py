@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.ikepono.Configuration import Configuration
+from src.ikepono.configuration import Configuration
 
 class ConfigurationTests(unittest.TestCase):
     def test_defaults(self):

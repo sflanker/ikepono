@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 @dataclass
-class LabeledImageVector:
+class LabeledImageEmbedding:
     embedding: torch.Tensor
     label: str
     source: Path

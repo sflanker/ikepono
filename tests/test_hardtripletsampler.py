@@ -6,8 +6,8 @@ import os
 from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.ikepono.HardTripletSampler import HardTripletBatchSampler
-from src.ikepono.VectorStore import VectorStore
+from src.ikepono.hardtripletsampler import HardTripletBatchSampler
+from src.ikepono.vectorstore import VectorStore
 
 class SamplerTests(unittest.TestCase):
     @classmethod

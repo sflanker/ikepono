@@ -3,8 +3,8 @@ import numpy as np
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.ikepono.VectorStore import VectorStore
-from src.ikepono.LabeledImageVector import LabeledImageVector
+from src.ikepono.vectorstore import VectorStore
+from src.ikepono.labeledimageembedding import LabeledImageEmbedding
 
 class VectorStoreTests(unittest.TestCase):
     def test_empty_store(self):
@@ -109,7 +109,7 @@ class VectorStoreTests(unittest.TestCase):
         for label in ['foo', 'bar', 'bat']:
             for i in range(10):
                 random_vector = np.random.rand(128).astype('float32')
-                rs.append(LabeledImageVector(embedding=random_vector, label=f"label", source=f"source_{label}_{i}"))
+                rs.append(LabeledImageEmbedding(embedding=random_vector, label=f"label", source=f"source_{label}_{i}"))
         store.add_labeled_image_vectors(rs)
         all_vectors = store.get_all_vectors()
         distances = store.compute_distances(rs[0].embedding, all_vectors)

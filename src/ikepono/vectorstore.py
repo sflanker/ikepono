@@ -2,7 +2,7 @@ import numpy as np
 import faiss
 from typing import List, Tuple, Dict, Any
 from typing import Iterable as Iter
-from ikepono.LabeledImageVector import LabeledImageVector
+from ikepono.labeledimageembedding import LabeledImageEmbedding
 
 
 class VectorStore:
@@ -39,7 +39,7 @@ class VectorStore:
     #         self.vector_store[vector_id] = vectors[i]
     #     self.id_counter += len(vectors)
 
-    def add_labeled_image_vectors(self, livs : Iter[LabeledImageVector]) -> None:
+    def add_labeled_image_vectors(self, livs : Iter[LabeledImageEmbedding]) -> None:
         for liv in livs:
             self.add_vector(liv.embedding, liv.label, liv.source)
 
