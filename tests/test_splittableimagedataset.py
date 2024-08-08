@@ -20,7 +20,7 @@ class SplittableImageDatasetTests(unittest.TestCase):
             raise Exception(f"Unsupported operating system: {platform.system()}")
 
     def test_k_over_5(self):
-        dataset = SplittableImageDataset(root_dir=self.data_dir, k=7)
+        dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=7)
         # For each label, confirm that there are at least 5 images between train and test
         for label in dataset.class_to_idx.keys():
             train_count = len([x for x in dataset.train_indices if dataset.labels[x] == label])
@@ -29,20 +29,40 @@ class SplittableImageDatasetTests(unittest.TestCase):
             self.assertGreaterEqual(test_count, 2)
 
     def test_find_images_and_labels(self):
-        dataset = SplittableImageDataset(root_dir=self.data_dir, k=7)
+        dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=7)
         self.assertEqual(918, len(dataset.image_paths))
         self.assertEqual(918, len(dataset.labels))
         self.assertEqual(56, len(dataset.class_to_idx))
         self.assertEqual('Akari', dataset.labels[0])
         self.assertEqual('Yvet', dataset.labels[-1])
 
+    def test_explicit_path_constructor(self):
+        paths = [os.path.join(self.data_dir, 'Akari', 'Akari_20210404_05.jpg'),
+                 os.path.join(self.data_dir, 'Akari', 'Akari_20140330_01.jpg'),
+                 os.path.join(self.data_dir, 'Akari', 'Akari_20180826_02.jpg'),
+                 os.path.join(self.data_dir, 'Akari', 'Akari_20191226_01.jpg'),
+                 os.path.join(self.data_dir, 'Akari', 'Akari_20191227_01.jpg'),
+                 os.path.join(self.data_dir, 'Yvet', 'Yvet_20151005_01.jpg'),
+                 os.path.join(self.data_dir, 'Yvet', 'Yvet_20181109_01.jpg'),
+                 os.path.join(self.data_dir, 'Yvet', 'Yvet_20181109_02.jpg'),
+                 os.path.join(self.data_dir, 'Yvet', 'Yvet_20190602_01.jpg'),
+                 os.path.join(self.data_dir, 'Yvet', 'Yvet_20201002_01.jpg'),
+                 ]
+        labels = ['Akari', 'Akari', 'Akari', 'Akari', 'Akari', 'Yvet', 'Yvet', 'Yvet', 'Yvet', 'Yvet']
+        dataset = SplittableImageDataset(paths=paths, labels=labels, k=4)
+        self.assertEqual(10, len(dataset.image_paths))
+        self.assertEqual(10, len(dataset.labels))
+        self.assertEqual(2, len(dataset.class_to_idx))
+        self.assertEqual('Akari', dataset.labels[0])
+        self.assertEqual('Yvet', dataset.labels[5])
+
     def test_split_indices(self):
-        dataset = SplittableImageDataset(root_dir=self.data_dir, k=7)
+        dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=7)
         self.assertEqual(735, len(dataset.train_indices))
         self.assertEqual(183, len(dataset.test_indices))
 
     def test_train_test_split(self):
-        dataset = SplittableImageDataset(root_dir=self.data_dir, k=7)
+        dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=7)
         self.assertEqual(735, len(dataset.train_indices))
         self.assertEqual(183, len(dataset.test_indices))
         self.assertEqual(15, dataset.train_indices[0])
@@ -50,9 +70,12 @@ class SplittableImageDatasetTests(unittest.TestCase):
 
     def test_transform(self):
         xform = SplittableImageDataset.standard_transform()
-        dataset = SplittableImageDataset(root_dir=self.data_dir, k=7, transform=xform)
+        dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=7, transform=xform)
         lit = dataset[0]
         image, label_idx, path = lit.image, lit.label, lit.source
         self.assertEqual(torch.Size([3, 224, 224]), image.size())
         self.assertEqual(0, label_idx)
         self.assertEqual(os.path.join(self.data_dir, 'Akari', 'Akari_20210404_05.jpg'), path)
+
+if __name__ == '__main__':
+    unittest.main()

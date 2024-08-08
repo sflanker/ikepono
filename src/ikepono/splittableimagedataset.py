@@ -10,48 +10,50 @@ from ikepono.labeledimageembedding import LabeledImageEmbedding, LabeledImageTen
 
 
 class SplittableImageDataset(Dataset):
-    def __init__(self, root_dir, transform=None, train=True, test_size=0.2, random_state=42, k=5):
-        self.root_dir = root_dir
-        self.transform = transform
-        self.train = train
-        self.test_size = test_size
-        self.random_state = random_state
-        self.k = k
-        self.image_paths, self.labels, self.class_to_idx = self._find_images_and_labels()
-        self.train_indices, self.test_indices = self._split_indices()
-
-    def _find_images_and_labels(self):
+    @classmethod
+    def from_directory(cls, root_dir, transform=None, train=True, test_size=0.2, random_state=42, k=5):
         image_paths = []
         labels = []
-        class_to_idx = {}
         class_counts = defaultdict(int)
 
         # First pass: count images per class
-        for root, _, files in os.walk(self.root_dir):
+        for root, _, files in os.walk(root_dir):
             for file in files:
                 if file.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
                     label = os.path.basename(os.path.dirname(os.path.join(root, file)))
                     class_counts[label] += 1
 
         # Second pass: keep only classes with at least k members
-        for root, _, files in os.walk(self.root_dir):
+        for root, _, files in os.walk(root_dir):
             for file in files:
                 if file.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
                     full_path = os.path.join(root, file)
                     label = os.path.basename(os.path.dirname(full_path))
 
-                    if class_counts[label] >= self.k:
+                    if class_counts[label] >= k:
                         image_paths.append(full_path)
                         labels.append(label)
 
-                        if label not in class_to_idx:
-                            class_to_idx[label] = len(class_to_idx)
+        return cls(image_paths, labels, transform, train, test_size, random_state, k)
 
-        return image_paths, labels, class_to_idx
+
+    def __init__(self, paths, labels, transform=None, train=True, test_size=0.2, random_state=42, k=5):
+        self.root_dir = None
+        self.transform = transform
+        self.train = train
+        self.test_size = test_size
+        self.random_state = random_state
+        self.k = k
+        self.image_paths = paths
+        self.labels = labels
+        self.class_to_idx = {label: idx for idx, label in enumerate(np.unique(labels))}
+        self.train_indices, self.test_indices = self._split_indices()
+
 
     def _split_indices(self):
         indices = np.arange(len(self.image_paths))
         labels = np.array(self.labels)
+        assert indices.shape == labels.shape, "Indices and labels must have the same shape. Labels need to be repeated for each image."
 
         train_indices, test_indices = [], []
 
@@ -59,7 +61,7 @@ class SplittableImageDataset(Dataset):
             class_indices = indices[labels == class_label]
             n_samples = len(class_indices)
 
-            if n_samples < 5:  # Minimum 3 for train and 2 for test
+            if n_samples < self.k:  # Minimum 3 for train and 2 for test
                 raise ValueError(f"Class {class_label} has fewer than 5 samples.")
 
             n_test = max(2, int(n_samples * self.test_size))
