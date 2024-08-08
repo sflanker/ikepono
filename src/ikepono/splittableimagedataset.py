@@ -5,8 +5,9 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from collections import defaultdict
 from sklearn.model_selection import train_test_split
+import torch
 
-from ikepono.labeledimageembedding import LabeledImageEmbedding, LabeledImageTensor
+from ikepono.labeledimageembedding import LabeledImageTensor
 
 
 class SplittableImageDataset(Dataset):
