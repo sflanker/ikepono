@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch
 import sys
 import os
+from pathlib import Path
 import platform
 from torchvision import transforms
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -10,6 +11,24 @@ from src.ikepono.splittableimagedataset import SplittableImageDataset
 
 
 class SplittableImageDatasetTests(unittest.TestCase):
+
+    @classmethod
+    def simple_dataset(cls):
+        data_dir = Path("/mnt/d/scratch_data/mantas/by_name/original/kona")
+        paths = [os.path.join(data_dir, 'Akari', 'Akari_20210404_05.jpg'),
+                 os.path.join(data_dir, 'Akari', 'Akari_20140330_01.jpg'),
+                 os.path.join(data_dir, 'Akari', 'Akari_20180826_02.jpg'),
+                 os.path.join(data_dir, 'Akari', 'Akari_20191226_01.jpg'),
+                 os.path.join(data_dir, 'Akari', 'Akari_20191227_01.jpg'),
+                 os.path.join(data_dir, 'Yvet', 'Yvet_20151005_01.jpg'),
+                 os.path.join(data_dir, 'Yvet', 'Yvet_20181109_01.jpg'),
+                 os.path.join(data_dir, 'Yvet', 'Yvet_20181109_02.jpg'),
+                 os.path.join(data_dir, 'Yvet', 'Yvet_20190602_01.jpg'),
+                 os.path.join(data_dir, 'Yvet', 'Yvet_20201002_01.jpg'),
+                 ]
+        labels = ['Akari', 'Akari', 'Akari', 'Akari', 'Akari', 'Yvet', 'Yvet', 'Yvet', 'Yvet', 'Yvet']
+        dataset = SplittableImageDataset(paths=paths, labels=labels, k=4)
+        return dataset
 
     def setUp(self):
         if platform.system() == "Darwin":  # macOS
@@ -37,19 +56,7 @@ class SplittableImageDatasetTests(unittest.TestCase):
         self.assertEqual('Yvet', dataset.labels[-1])
 
     def test_explicit_path_constructor(self):
-        paths = [os.path.join(self.data_dir, 'Akari', 'Akari_20210404_05.jpg'),
-                 os.path.join(self.data_dir, 'Akari', 'Akari_20140330_01.jpg'),
-                 os.path.join(self.data_dir, 'Akari', 'Akari_20180826_02.jpg'),
-                 os.path.join(self.data_dir, 'Akari', 'Akari_20191226_01.jpg'),
-                 os.path.join(self.data_dir, 'Akari', 'Akari_20191227_01.jpg'),
-                 os.path.join(self.data_dir, 'Yvet', 'Yvet_20151005_01.jpg'),
-                 os.path.join(self.data_dir, 'Yvet', 'Yvet_20181109_01.jpg'),
-                 os.path.join(self.data_dir, 'Yvet', 'Yvet_20181109_02.jpg'),
-                 os.path.join(self.data_dir, 'Yvet', 'Yvet_20190602_01.jpg'),
-                 os.path.join(self.data_dir, 'Yvet', 'Yvet_20201002_01.jpg'),
-                 ]
-        labels = ['Akari', 'Akari', 'Akari', 'Akari', 'Akari', 'Yvet', 'Yvet', 'Yvet', 'Yvet', 'Yvet']
-        dataset = SplittableImageDataset(paths=paths, labels=labels, k=4)
+        dataset = SplittableImageDatasetTests.simple_dataset()
         self.assertEqual(10, len(dataset.image_paths))
         self.assertEqual(10, len(dataset.labels))
         self.assertEqual(2, len(dataset.class_to_idx))
