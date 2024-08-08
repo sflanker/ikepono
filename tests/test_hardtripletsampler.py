@@ -5,27 +5,37 @@ import sys
 import os
 from pathlib import Path
 
+from ikepono.labeledimageembedding import LabeledImageEmbedding
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.ikepono.hardtripletsampler import HardTripletBatchSampler
 from src.ikepono.vectorstore import VectorStore
+from tests.test_splittableimagedataset import SplittableImageDatasetTests
 
 class SamplerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls._dataset = SplittableImageDatasetTests.simple_dataset()
         cls._vector_store = VectorStore(dimension=128)
-        for individual in range(9):
-            for photo in range(4):
-                random_vector = torch.rand(128).numpy().astype('float32')
-                cls._vector_store.add_vector(random_vector, f"individual_{individual}", f"source_{individual}_{photo}")
+        # Mock embeddings for the dataset
+        lies = []
+        for i in range(len(cls._dataset)):
+            v = torch.randn(128)
+            lie = LabeledImageEmbedding(embedding=v, label=cls._dataset.labels[i], source=cls._dataset.image_paths[i])
+            lies.append(lie)
+        cls._vector_store.add_labeled_image_vectors(lies)
 
     def test_len(self):
-        sampler = HardTripletBatchSampler(SamplerTests._vector_store, 3, 4)
-        assert len(sampler) == 3, f"Expected 3, got {len(sampler)}"
+        sampler = HardTripletBatchSampler(SamplerTests._dataset, SamplerTests._vector_store, individuals_per_batch=2)
+        # 2 individuals per batch, 3 photos per triplet = 6 photos per batch.
+        # 10 photos in the dataset, 8 in train, 2 in test. 8 // 6 = 1
+        assert len(sampler) == 1, f"Expected 1, got {len(sampler)}"
 
     def test_iter(self):
-        individuals_per_batch = 3
+        individuals_per_batch = 2
         photos_per_triplet = 3 # Obviously
-        sampler = HardTripletBatchSampler(SamplerTests._vector_store, individuals_per_batch, 4)
-        for batch in sampler:
-            assert len(batch) == individuals_per_batch * photos_per_triplet, f"Expected 3 * 3, got {len(batch)}"
-            break
+        dataset = SplittableImageDatasetTests.simple_dataset()
+        sampler = HardTripletBatchSampler(dataset, SamplerTests._vector_store, individuals_per_batch)
+        expected_batch_count = individuals_per_batch * photos_per_triplet
+        batch = sampler.__iter__().__next__()
+        assert len(batch) == expected_batch_count, f"Expected {expected_batch_count}, got {len(batch)}"
