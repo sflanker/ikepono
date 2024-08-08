@@ -77,7 +77,7 @@ class ReidentifyModel(nn.Module):
         batch_images = torch.stack([dataloader[i][0] for i in batch_indices]).to(device)
         batch_labels = torch.tensor([dataloader[i][1] for i in batch_indices]).to(device)
         # Forward pass
-        embeddings = forward(batch_images)
+        embeddings = self.forward(batch_images)
         # Compute loss
         loss = criterion(embeddings, batch_labels)
         # Backward pass and optimize

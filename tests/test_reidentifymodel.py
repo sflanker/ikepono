@@ -1,11 +1,16 @@
 import unittest
 import torch.nn as nn
 import torch
+from torch.utils.data import DataLoader
 import sys
 import os
+
+from src.ikepono.configuration import Configuration
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.ikepono.ReidentifyModel import _init_weights, ReidentifyModel
-
+from test_hardtripletsampler import SamplerTests
+from test_splittableimagedataset import SplittableImageDatasetTests
 class ReidentifyModelTests(unittest.TestCase):
     torch_device = torch.device("cuda:0" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_built() else "cpu")
     def test_initialize_weights_linear(self):
@@ -84,7 +89,17 @@ class ReidentifyModelTests(unittest.TestCase):
         return False
 
     def test_train_one_batch(self):
+        model, dataloader, vector_store = self.simple_model()
+        model._train_one_batch(dataloader, batch_indices, vector_store)
         return False
+
+    def simple_model(self):
+        configuration = Configuration("test_configuration.json")
+        sampler = SamplerTests.simple_sampler()
+        ds = SplittableImageDatasetTests.simple_dataset()
+        loader = DataLoader(ds, batch_size=32, sampler=sampler)
+        model = ReidentifyModel(configuration)
+        return model, loader, vector_store
 
 
 if __name__ == '__main__':

@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 import torch
 import json
+from ptml import SubcenterArcfaceLoss
 class Configuration:
     def __init__(self, config_file : Optional[Path] = None):
         self.configuration = {}
@@ -41,7 +42,7 @@ class Configuration:
         device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_built() else "cpu")
         configuration["model"] = {"backbone": "resnet18", "pretrained": True, "freeze": True, "cut": -1, "dropout": 0.5,
                               "hidden_units": 512, "output_vector_size": 128, "dataset_device": torch.device("cpu"),
-                                  "model_device" : device}
+                                  "model_device" : device, criterion = nn.ArcFaceLoss(num_classes=1000, embedding_size=128)}
 
         configuration["train"] = {"epochs": 10, "batch_size": 32, "learning_rate": 0.001, "momentum": 0.9,
                               "weight_decay": 0.0001, "dataset_device": torch.device("cpu"),
