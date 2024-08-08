@@ -9,6 +9,7 @@ class LabeledImageEmbedding:
     label: str
     source: Path
 
+# Note that the device on which the Tensor lives may be different from the device on which the model is running.
 @dataclass
 class LabeledImageTensor:
     image: torch.Tensor

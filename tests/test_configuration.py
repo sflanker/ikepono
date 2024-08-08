@@ -22,7 +22,8 @@ class ConfigurationTests(unittest.TestCase):
         assert config.configuration["train"]["learning_rate"] == 0.001
         assert config.configuration["train"]["momentum"] == 0.9
         assert config.configuration["train"]["weight_decay"] == 0.0001
-        assert config.configuration["train"]["device"] == torch.device("cuda:0" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_built() else "cpu")
+        assert config.configuration["train"]["dataset_device"] == torch.device("cpu")
+        assert config.configuration["train"]["model_device"] == torch.device("cuda") if torch.cuda.is_available() else torch.device("mps") if torch.backends.mps.is_built() else torch.device("cpu")
 
     def test_load(self):
         config = Configuration(Path("test_configuration.json"))
@@ -37,7 +38,8 @@ class ConfigurationTests(unittest.TestCase):
         assert config.configuration["train"]["learning_rate"] == 0.001
         assert config.configuration["train"]["momentum"] == 0.9
         assert config.configuration["train"]["weight_decay"] == 0.0001
-        assert config.configuration["train"]["device"] == torch.device("cpu"), f"Device should be cpu but is {config.configuration['train']['device']}"
+        assert config.configuration["train"]["dataset_device"] == torch.device("cpu"), f"Device should be cpu but is {config.configuration['train']['dataset_device']}"
+        assert config.configuration["train"]["model_device"] == torch.device("cuda") if torch.cuda.is_available() else torch.device("mps") if torch.backends.mps.is_built() else torch.device("cpu"), f"Device should be cpu but is {config.configuration['train']['device']}"
 
     def test_validate_missing_model(self):
         config = Configuration(Path("test_configuration.json"))

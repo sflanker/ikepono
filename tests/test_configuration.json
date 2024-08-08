@@ -7,7 +7,8 @@
     "dropout": 0.5,
     "hidden_units": 512,
     "output_vector_size": 128,
-    "device": "cpu"
+    "dataset_device": "cpu",
+    "model_device": "cuda"
   },
   "train": {
     "epochs": 10,
@@ -15,6 +16,7 @@
     "learning_rate": 0.001,
     "momentum": 0.9,
     "weight_decay": 0.0001,
-    "device": "cpu"
+    "dataset_device": "cpu",
+    "model_device": "cuda"
   }
 }

@@ -11,7 +11,7 @@ from ikepono.labeledimageembedding import LabeledImageEmbedding, LabeledImageTen
 
 class SplittableImageDataset(Dataset):
     @classmethod
-    def from_directory(cls, root_dir, transform=None, train=True, test_size=0.2, random_state=42, k=5):
+    def from_directory(cls, root_dir, transform=None, train=True, test_size=0.2, random_state=42, k=5, device = torch.device('cpu')):
         image_paths = []
         labels = []
         class_counts = defaultdict(int)
@@ -34,10 +34,10 @@ class SplittableImageDataset(Dataset):
                         image_paths.append(full_path)
                         labels.append(label)
 
-        return cls(image_paths, labels, transform, train, test_size, random_state, k)
+        return cls(image_paths, labels, transform, train, test_size, random_state, k, device)
 
 
-    def __init__(self, paths, labels, transform=None, train=True, test_size=0.2, random_state=42, k=5):
+    def __init__(self, paths, labels, transform=None, train=True, test_size=0.2, random_state=42, k=5, device = torch.device('cpu')):
         self.root_dir = None
         self.transform = transform
         self.train = train
@@ -46,6 +46,7 @@ class SplittableImageDataset(Dataset):
         self.k = k
         self.image_paths = paths
         self.labels = labels
+        self.device = device
         self.class_to_idx = {label: idx for idx, label in enumerate(np.unique(labels))}
         self.train_indices, self.test_indices = self._split_indices()
 
@@ -100,6 +101,7 @@ class SplittableImageDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
+        image = image.to(self.device)
         return LabeledImageTensor(image=image, label=self.class_to_idx[label], source=img_path)
 
     @staticmethod
