@@ -16,8 +16,8 @@ class HardTripletBatchSampler(Sampler):
         self.i_far_same = i_near_same
         self.i_near_others = i_near_others
 
-        if len(vector_store.get_all_labels()) == 0:
-            vector_store.build_labeled_image_embeddings(dataset, individuals_per_batch, max_photos_per_individual)
+        if self.vector_store.get_all_labels().size == 0:
+            self.vector_store.build_labeled_image_embeddings(dataset, individuals_per_batch, max_photos_per_individual)
         self.individuals = self.vector_store.get_all_labels()
 
     def __iter__(self):
