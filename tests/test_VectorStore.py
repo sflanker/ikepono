@@ -4,6 +4,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.ikepono.VectorStore import VectorStore
+from src.ikepono.LabeledImageVector import LabeledImageVector
 
 class VectorStoreTests(unittest.TestCase):
     def test_empty_store(self):
@@ -101,6 +102,20 @@ class VectorStoreTests(unittest.TestCase):
         sources = store.get_sources_by_label("label0")
         assert sources.shape == (1,), f"Expected (1,), got {sources.shape}"
         assert sources[0] == "source0", f"Expected 'source0', got {sources[0]}"
+
+    def test_add_labeled_image_vectors(self):
+        store = VectorStore(dimension=128)
+        rs = []
+        for label in ['foo', 'bar', 'bat']:
+            for i in range(10):
+                random_vector = np.random.rand(128).astype('float32')
+                rs.append(LabeledImageVector(embedding=random_vector, label=f"label", source=f"source_{label}_{i}"))
+        store.add_labeled_image_vectors(rs)
+        all_vectors = store.get_all_vectors()
+        distances = store.compute_distances(rs[0].embedding, all_vectors)
+        assert distances.shape == (30,), f"Expected (10,), got {distances.shape}"
+        assert distances[0] == 0.0, f"Expected 0.0, got {distances[0]}"
+        assert np.all(distances[1:] > 0.0), f"Expected all distances to be greater than 0.0, got {distances[1:]}"
 
 if __name__ == '__main__':
     unittest.main()

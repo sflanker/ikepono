@@ -77,6 +77,15 @@ class ReidentifyModelTests(unittest.TestCase):
         embedding = reidentify_model(img_tensor)
         assert embedding.shape == (32, 100)
 
+    def test_train(self):
+        return False
+
+    def test_train_one_epoch(self):
+        return False
+
+    def test_train_one_batch(self):
+        return False
+
 
 if __name__ == '__main__':
     unittest.main()

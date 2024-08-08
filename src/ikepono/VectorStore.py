@@ -1,6 +1,8 @@
 import numpy as np
 import faiss
 from typing import List, Tuple, Dict, Any
+from typing import Iterable as Iter
+from ikepono.LabeledImageVector import LabeledImageVector
 
 
 class VectorStore:
@@ -25,6 +27,21 @@ class VectorStore:
         self.source_to_id[source] = vector_id
         self.vector_store[vector_id] = vector  # Store the vector
         self.id_counter += 1
+
+    # def add_with_ids(self, vectors: np.ndarray, labels: List[Any], sources: List[str]) -> None:
+    #     vector_ids = np.arange(self.id_counter, self.id_counter + len(vectors))
+    #     self.index.add_with_ids(vectors, vector_ids)
+    #     for i, vector_id in enumerate(vector_ids):
+    #         self.id_to_label[vector_id] = labels[i]
+    #         self.id_to_source[vector_id] = sources[i]
+    #         self.label_to_ids.setdefault(labels[i], []).append(vector_id)
+    #         self.source_to_id[sources[i]] = vector_id
+    #         self.vector_store[vector_id] = vectors[i]
+    #     self.id_counter += len(vectors)
+
+    def add_labeled_image_vectors(self, livs : Iter[LabeledImageVector]) -> None:
+        for liv in livs:
+            self.add_vector(liv.embedding, liv.label, liv.source)
 
     def update_vector(self, source: str, new_vector: np.ndarray, new_label: Any = None) -> None:
         if source in self.source_to_id:

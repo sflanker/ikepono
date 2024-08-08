@@ -1,6 +1,7 @@
 import torch.nn as nn
 import timm
 import torch
+import ikepono.VectorStore as VectorStore
 
 def _init_weights(model: nn.Module) -> None:
     if isinstance(model, nn.Linear):
@@ -33,8 +34,8 @@ class ReidentifyModel(nn.Module):
         self.projection = self._create_head(self.backbone_output_dim, self.hidden_units, self.output_vector_size).to(self.device)
         _init_weights(self.projection)
 
-    def forward(self, img_tensor: torch.Tensor) -> torch.Tensor:
-        backbone_representation = self.backbone(img_tensor)
+    def forward(self, img_tensors: torch.Tensor) -> torch.Tensor:
+        backbone_representation = self.backbone(img_tensors)
         embedding = self.projection(backbone_representation)
 
         return embedding
@@ -49,3 +50,46 @@ class ReidentifyModel(nn.Module):
             nn.Dropout(self.dropout),
             nn.Linear(self.hidden_units, output_vector_size)
         )
+
+    def train(self, vector_store : VectorStore, dataloader, num_epochs : int, criterion, optimizer, scheduler):
+        # Training loop
+        best_loss = float('inf')
+
+        initial_embeddings, initial_labels = self.get_embeddings(vector_store, dataloader, self.device)
+        vector_store.add_with_ids(initial_embeddings, initial_labels)
+
+        for epoch in range(num_epochs):
+            loss = self._train_one_epoch(vector_store)
+            # Save best model
+            if loss.item() < best_loss:
+                best_loss = loss.item()
+                torch.save(model.state_dict(), "best_model.pth")
+                mlflow.log_artifact("best_model.pth")
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}")
+
+    def _train_one_epoch(self, train_loader, vector_store):
+        for batch_indices in train_loader:
+            loss = self._train_one_batch(dataloader, batch_indices, vector_store)
+        return loss
+
+    def _train_one_batch(self, dataloader, batch_indices, vector_store):
+        # Get the actual data for these indices
+        batch_images = torch.stack([dataloader[i][0] for i in batch_indices]).to(device)
+        batch_labels = torch.tensor([dataloader[i][1] for i in batch_indices]).to(device)
+        # Forward pass
+        embeddings = forward(batch_images)
+        # Compute loss
+        loss = criterion(embeddings, batch_labels)
+        # Backward pass and optimize
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        # Update FAISS index
+        batch_indices_np = np.array(batch_indices)
+        # Remove old vectors
+        faiss_index.remove_ids(batch_indices_np)
+        # Add updated vectors
+        faiss_index.add_with_ids(embeddings.detach().cpu().numpy(), batch_indices_np)
+        # Log with MLflow
+        mlflow.log_metric("loss", loss.item())
+        return loss
