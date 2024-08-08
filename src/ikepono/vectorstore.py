@@ -13,31 +13,25 @@ class VectorStore:
         self.id_counter: int = 0
         self.id_to_label: Dict[int, Any] = {}
         self.id_to_source: Dict[int, str] = {}
-        self.label_to_ids: Dict[Any, List[int]] = {}
+        self.label_to_ids: Dict[str, List[int]] = {}
         self.source_to_id: Dict[str, int] = {}
         self.vector_store: Dict[int, np.ndarray] = {}  # Store vectors separately
 
-    def add_vector(self, vector: np.ndarray, label: Any, source: str) -> None:
+    def add_vector(self, vector: np.ndarray, label: str, source: str) -> None:
         vector_id: int = self.id_counter
         vector_array = np.array([vector]).astype('float32')
-        self.index.add_with_ids(vector_array, np.array([vector_id]))
+        if label not in self.label_to_ids:
+            self.label_to_ids[label] = []
+        self.label_to_ids[label].append(vector_id)
+        ids = np.array([vector_id]).astype('int64')
+        assert vector_array.shape[0] == ids.shape[0], "Vector and ID shapes do not match: {} vs {}".format(vector_array.shape, ids.shape)
+        self.index.add_with_ids(vector_array, ids)
         self.id_to_label[vector_id] = label
         self.id_to_source[vector_id] = source
-        self.label_to_ids.setdefault(label, []).append(vector_id)
         self.source_to_id[source] = vector_id
         self.vector_store[vector_id] = vector  # Store the vector
         self.id_counter += 1
 
-    # def add_with_ids(self, vectors: np.ndarray, labels: List[Any], sources: List[str]) -> None:
-    #     vector_ids = np.arange(self.id_counter, self.id_counter + len(vectors))
-    #     self.index.add_with_ids(vectors, vector_ids)
-    #     for i, vector_id in enumerate(vector_ids):
-    #         self.id_to_label[vector_id] = labels[i]
-    #         self.id_to_source[vector_id] = sources[i]
-    #         self.label_to_ids.setdefault(labels[i], []).append(vector_id)
-    #         self.source_to_id[sources[i]] = vector_id
-    #         self.vector_store[vector_id] = vectors[i]
-    #     self.id_counter += len(vectors)
 
     def add_labeled_image_vectors(self, livs : Iter[LabeledImageEmbedding]) -> None:
         for liv in livs:
