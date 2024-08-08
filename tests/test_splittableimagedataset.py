@@ -51,7 +51,8 @@ class SplittableImageDatasetTests(unittest.TestCase):
     def test_transform(self):
         xform = SplittableImageDataset.standard_transform()
         dataset = SplittableImageDataset(root_dir=self.data_dir, k=7, transform=xform)
-        image, label_idx, path = dataset[0]
+        lit = dataset[0]
+        image, label_idx, path = lit.image, lit.label, lit.source
         self.assertEqual(torch.Size([3, 224, 224]), image.size())
         self.assertEqual(0, label_idx)
         self.assertEqual(os.path.join(self.data_dir, 'Akari', 'Akari_20210404_05.jpg'), path)

@@ -6,6 +6,8 @@ from torchvision import transforms
 from collections import defaultdict
 from sklearn.model_selection import train_test_split
 
+from ikepono.LabeledImageVector import LabeledImageVector, LabeledImageTensor
+
 
 class SplittableImageDataset(Dataset):
     def __init__(self, root_dir, transform=None, train=True, test_size=0.2, random_state=42, k=5):
@@ -96,7 +98,7 @@ class SplittableImageDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return image, self.class_to_idx[label], img_path
+        return LabeledImageTensor(image=image, label=self.class_to_idx[label], source=img_path)
 
     @staticmethod
     def standard_transform():
