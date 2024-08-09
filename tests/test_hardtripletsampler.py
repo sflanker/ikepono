@@ -38,6 +38,7 @@ class SamplerTests(unittest.TestCase):
         expected_batch_count = individuals_per_batch * photos_per_triplet
         batch = sampler.__iter__().__next__()
         assert len(batch) == expected_batch_count, f"Expected {expected_batch_count}, got {len(batch)}"
+        assert [isinstance(ix, int) for ix in batch], f"Expected list of ints, got {type(batch)}"
 
     @classmethod
     def simple_sampler(cls):

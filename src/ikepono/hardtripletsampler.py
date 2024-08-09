@@ -1,3 +1,5 @@
+from typing import List, Iterable
+
 import numpy as np
 from torch.utils.data import Sampler
 
@@ -20,39 +22,36 @@ class HardTripletBatchSampler(Sampler):
             self.vector_store.build_labeled_image_embeddings(dataset, individuals_per_batch, max_photos_per_individual)
         self.individuals = self.vector_store.get_all_labels()
 
-    def __iter__(self):
+    # Needs to return _indexes_ of the dataset, not the actual data
+    def __iter__(self) -> Iterable[List[int]]:
         while True:
             batch = []
-            selected_individuals = np.random.choice(self.individuals, self.individuals_per_batch, replace=True)
+            num_individuals = min(self.individuals_per_batch, len(self.individuals))
+            selected_individuals = np.random.choice(self.individuals, num_individuals, replace=False)
 
             for individual in selected_individuals:
+                positive_indices = self.vector_store.label_to_ids[individual]
+                primary_index = np.random.choice(positive_indices)
+                batch.append(primary_index)
+
+                primary_vector = self.vector_store.get_vector(self.vector_store.id_to_source[primary_index]).numpy()
                 positive_vectors = self.vector_store.get_vectors_by_label(individual)
-                positive_sources = self.vector_store.get_sources_by_label(individual)
-                primary_source = positive_sources[np.random.choice(positive_sources.shape[0])]
-
-                primary_vector = self.vector_store.get_vector(primary_source).numpy()
-                batch.append(('primary', LabeledImageEmbedding(embedding=primary_vector, label=individual, source=primary_source)))
-
                 positive_distances = self.vector_store.compute_distances(primary_vector, positive_vectors)
-                hardest_positives = np.argsort(positive_distances)[-self.i_far_same:]
-                batch.extend([('distant_positive', LabeledImageEmbedding(embedding=positive_vectors[i],
-                                                                         label = individual,
-                                                                         source = positive_sources[i])) for i in hardest_positives])
+                num_hardest_positives = min(self.i_far_same, len(positive_indices) - 1)
+                hardest_positives = np.argsort(positive_distances)[-num_hardest_positives:]
+                batch.extend(
+                    [idx for i, idx in enumerate(positive_indices) if i in hardest_positives and idx != primary_index])
 
-                negative_vectors = np.vstack([self.vector_store.get_vectors_by_label(label)
-                                              for label in self.individuals if label != individual])
+                negative_indices = [idx for label in self.individuals
+                                    if label != individual
+                                    for idx in self.vector_store.label_to_ids[label]]
+                negative_vectors = np.vstack([self.vector_store.get_vector(self.vector_store.id_to_source[idx]).numpy()
+                                              for idx in negative_indices])
                 negative_distances = self.vector_store.compute_distances(primary_vector, negative_vectors)
-                hardest_negatives = np.argsort(negative_distances)[:self.i_near_others]
-
-                negative_label_sources = [(label,source) for label in self.individuals for source in self.vector_store.get_sources_by_label(label)
-                                    if label != individual]
-
-                batch.extend([('nearby_negative', LabeledImageEmbedding(embedding=negative_vectors[i],
-                                                                        label = negative_label_sources[i][0],
-                                                                        source=negative_label_sources[i][1]) )for i in hardest_negatives])
-
+                num_hardest_negatives = min(self.i_near_others, len(negative_indices))
+                hardest_negatives = np.argsort(negative_distances)[:num_hardest_negatives]
+                batch.extend([negative_indices[i] for i in hardest_negatives])
             yield batch
-
     def __len__(self):
         photos_per_individual = 1 + self.i_far_same + self.i_near_others # primary + distant positives + nearby negatives
         return len(self.dataset) // (self.individuals_per_batch * photos_per_individual)
