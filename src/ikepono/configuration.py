@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 import torch
 import json
-from ptml import SubcenterArcfaceLoss
+
 class Configuration:
     def __init__(self, config_file : Optional[Path] = None):
         self.configuration = {}
@@ -10,7 +10,8 @@ class Configuration:
             self.configuration = self.load(config_file)
         else:
             self.configuration = Configuration.defaults()
-
+        self.configuration["train"]["dataset_device"] = torch.device(self.configuration["train"]["dataset_device"])
+        self.configuration["train"]["model_device"] = torch.device(self.configuration["train"]["model_device"])
         Configuration.validate(self.configuration)
 
     @staticmethod
@@ -34,15 +35,15 @@ class Configuration:
 
         assert 2 == len(configuration), "Configuration should have exactly two keys: model and train"
         assert 7 == len(configuration["train"]), "Train configuration should have exactly 6 keys: epochs, batch_size, learning_rate, momentum, weight_decay, dataset_device, model_device"
-        assert 9 == len(configuration["model"]), "Model configuration should have exactly 8 keys: backbone, pretrained, freeze, cut, dropout, hidden_units, output_vector_size, dataset_device, model_device"
+        assert 10 == len(configuration["model"]), "Model configuration should have exactly 10 keys: backbone, pretrained, freeze, cut, dropout, backbone_output_dim, hidden_units, output_vector_size, dataset_device, model_device"
 
     @staticmethod
     def defaults():
         configuration = {}
         device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_built() else "cpu")
         configuration["model"] = {"backbone": "resnet18", "pretrained": True, "freeze": True, "cut": -1, "dropout": 0.5,
-                              "hidden_units": 512, "output_vector_size": 128, "dataset_device": torch.device("cpu"),
-                                  "model_device" : device, criterion = nn.ArcFaceLoss(num_classes=1000, embedding_size=128)}
+                              "backbone_output_dim": 512, "hidden_units": 512, "output_vector_size": 128, "dataset_device": torch.device("cpu"),
+                                  "model_device" : device}
 
         configuration["train"] = {"epochs": 10, "batch_size": 32, "learning_rate": 0.001, "momentum": 0.9,
                               "weight_decay": 0.0001, "dataset_device": torch.device("cpu"),
@@ -52,6 +53,10 @@ class Configuration:
     def load(self, config_file : Path):
         with open(config_file, 'r') as f:
             configuration = json.load(f)
-        configuration["train"]["dataset_device"] = torch.device(configuration["train"]["dataset_device"])
-        configuration["train"]["model_device"] = torch.device(configuration["train"]["model_device"])
         return configuration
+
+    def train_configuration(self):
+        return self._configuration["train"]
+
+    def model_configuration(self):
+        return self._configuration["model"]

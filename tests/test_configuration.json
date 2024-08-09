@@ -5,6 +5,7 @@
     "freeze": true,
     "cut": -1,
     "dropout": 0.5,
+    "backbone_output_dim": 512,
     "hidden_units": 512,
     "output_vector_size": 128,
     "dataset_device": "cpu",

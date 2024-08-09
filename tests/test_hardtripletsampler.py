@@ -33,9 +33,17 @@ class SamplerTests(unittest.TestCase):
 
     def test_iter(self):
         individuals_per_batch = 2
-        photos_per_triplet = 3 # Obviously
-        dataset = SplittableImageDatasetTests.simple_dataset()
-        sampler = HardTripletBatchSampler(dataset, SamplerTests._vector_store, individuals_per_batch)
+        photos_per_triplet = 3  # Obviously
+        sampler = SamplerTests.simple_sampler()
         expected_batch_count = individuals_per_batch * photos_per_triplet
         batch = sampler.__iter__().__next__()
         assert len(batch) == expected_batch_count, f"Expected {expected_batch_count}, got {len(batch)}"
+
+    @classmethod
+    def simple_sampler(cls):
+        cls.setUpClass()
+        individuals_per_batch = 2
+        photos_per_triplet = 3  # Obviously
+        dataset = SplittableImageDatasetTests.simple_dataset()
+        sampler = HardTripletBatchSampler(dataset, SamplerTests._vector_store, individuals_per_batch)
+        return sampler

@@ -16,6 +16,7 @@ class ConfigurationTests(unittest.TestCase):
         assert config.configuration["model"]["freeze"] == True
         assert config.configuration["model"]["cut"] == -1
         assert config.configuration["model"]["dropout"] == 0.5
+        assert config.configuration["model"]["backbone_output_dim"] == 512
         assert config.configuration["model"]["hidden_units"] == 512
         assert config.configuration["train"]["epochs"] == 10
         assert config.configuration["train"]["batch_size"] == 32
