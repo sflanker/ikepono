@@ -12,7 +12,7 @@ from ikepono.labeledimageembedding import LabeledImageTensor
 
 class SplittableImageDataset(Dataset):
     @classmethod
-    def from_directory(cls, root_dir, transform=None, train=True, test_size=0.2, random_state=42, k=5, device = torch.device('cpu')):
+    def from_directory(cls, root_dir, transform=None, train=True, test_size=0.2, random_state=42, k=5, device = torch.device('cpu')) -> "SplittableImageDataset":
         image_paths = []
         labels = []
         class_counts = defaultdict(int)
@@ -52,7 +52,7 @@ class SplittableImageDataset(Dataset):
         self.train_indices, self.test_indices = self._split_indices()
 
 
-    def _split_indices(self):
+    def _split_indices(self) -> tuple[list[int], list[int]]:
         indices = np.arange(len(self.image_paths))
         labels = np.array(self.labels)
         assert indices.shape == labels.shape, "Indices and labels must have the same shape. Labels need to be repeated for each image."
@@ -83,18 +83,13 @@ class SplittableImageDataset(Dataset):
 
         return train_indices, test_indices
 
-    def __len__(self):
+    def __len__(self) -> int:
         if self.train:
             return len(self.train_indices)
         else:
             return len(self.test_indices)
 
-    def __getitem__(self, idx):
-        if self.train:
-            idx = self.train_indices[idx]
-        else:
-            idx = self.test_indices[idx]
-
+    def __getitem__(self, idx : int) ->LabeledImageTensor:
         img_path = self.image_paths[idx]
         pil_image = Image.open(img_path).convert('RGB')
         label = self.labels[idx]
@@ -110,7 +105,7 @@ class SplittableImageDataset(Dataset):
         return LabeledImageTensor(image=tensor_image, label=self.class_to_idx[label], source=img_path)
 
     @staticmethod
-    def standard_transform():
+    def standard_transform() -> transforms.Compose:
         return transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),

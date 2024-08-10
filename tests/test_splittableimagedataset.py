@@ -82,7 +82,7 @@ class SplittableImageDatasetTests(unittest.TestCase):
         image, label_idx, path = lit.image, lit.label, lit.source
         self.assertEqual(torch.Size([3, 224, 224]), image.size())
         self.assertEqual(0, label_idx)
-        self.assertEqual(os.path.join(self.data_dir, 'Akari', 'Akari_20210404_05.jpg'), path)
+        self.assertEqual(os.path.join(self.data_dir, 'Akari', 'Akari_20140330_01.jpg'), path)
 
 if __name__ == '__main__':
     unittest.main()
