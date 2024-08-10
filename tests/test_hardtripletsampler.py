@@ -1,4 +1,6 @@
 import unittest
+
+import numpy as np
 import torch.nn as nn
 import torch
 import sys
@@ -32,13 +34,11 @@ class SamplerTests(unittest.TestCase):
         assert len(sampler) == 1, f"Expected 1, got {len(sampler)}"
 
     def test_iter(self):
-        individuals_per_batch = 2
-        photos_per_triplet = 3  # Obviously
         sampler = SamplerTests.simple_sampler()
-        expected_batch_count = individuals_per_batch * photos_per_triplet
-        batch = sampler.__iter__().__next__()
-        assert len(batch) == expected_batch_count, f"Expected {expected_batch_count}, got {len(batch)}"
-        assert [isinstance(ix, int) for ix in batch], f"Expected list of ints, got {type(batch)}"
+        first = next(iter(sampler))
+        assert isinstance(first, np.int64), f"Expected int, got {type(first)}"
+        assert first >= 0
+        assert first < len(SamplerTests._dataset)
 
     @classmethod
     def simple_sampler(cls):

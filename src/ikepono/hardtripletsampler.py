@@ -32,15 +32,16 @@ class HardTripletBatchSampler(Sampler):
             for individual in selected_individuals:
                 positive_indices = self.vector_store.label_to_ids[individual]
                 primary_index = np.random.choice(positive_indices)
-                batch.append(primary_index)
+                yield primary_index
 
                 primary_vector = self.vector_store.get_vector(self.vector_store.id_to_source[primary_index]).numpy()
                 positive_vectors = self.vector_store.get_vectors_by_label(individual)
                 positive_distances = self.vector_store.compute_distances(primary_vector, positive_vectors)
                 num_hardest_positives = min(self.i_far_same, len(positive_indices) - 1)
                 hardest_positives = np.argsort(positive_distances)[-num_hardest_positives:]
-                batch.extend(
-                    [idx for i, idx in enumerate(positive_indices) if i in hardest_positives and idx != primary_index])
+                for i, idx in enumerate(positive_indices):
+                    if i in hardest_positives and idx != primary_index:
+                        yield idx
 
                 negative_indices = [idx for label in self.individuals
                                     if label != individual
@@ -50,8 +51,9 @@ class HardTripletBatchSampler(Sampler):
                 negative_distances = self.vector_store.compute_distances(primary_vector, negative_vectors)
                 num_hardest_negatives = min(self.i_near_others, len(negative_indices))
                 hardest_negatives = np.argsort(negative_distances)[:num_hardest_negatives]
-                batch.extend([negative_indices[i] for i in hardest_negatives])
-            yield batch
+                for i in hardest_negatives:
+                    yield negative_indices[i]
+
     def __len__(self):
         photos_per_individual = 1 + self.i_far_same + self.i_near_others # primary + distant positives + nearby negatives
         return len(self.dataset) // (self.individuals_per_batch * photos_per_individual)
