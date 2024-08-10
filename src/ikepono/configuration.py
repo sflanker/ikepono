@@ -56,7 +56,7 @@ class Configuration:
         return configuration
 
     def train_configuration(self):
-        return self._configuration["train"]
+        return self.configuration["train"]
 
     def model_configuration(self):
-        return self._configuration["model"]
+        return self.configuration["model"]
