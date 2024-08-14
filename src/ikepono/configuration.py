@@ -18,11 +18,18 @@ class Configuration:
     def validate(configuration):
         assert "model" in configuration, "model configuration is missing"
         assert "train" in configuration, "train configuration is missing"
+
         assert "epochs" in configuration["train"], "epochs is missing from train configuration"
         assert "batch_size" in configuration["train"], "batch_size is missing from train configuration"
         assert "learning_rate" in configuration["train"], "learning_rate is missing from train configuration"
         assert "momentum" in configuration["train"], "momentum is missing from train configuration"
         assert "weight_decay" in configuration["train"], "weight_decay is missing from train configuration"
+        assert "optimizer" in configuration["train"], "optimizer is missing from train configuration"
+        assert "criterion" in configuration["train"], "criterion is missing from train configuration"
+        assert "dataset_device" in configuration["train"], "dataset device is missing from train configuration"
+        assert "model_device" in configuration["train"], "model device is missing from train configuration"
+        assert "num_classes" in configuration["train"], "num_classes is missing from train configuration"
+
         assert "backbone" in configuration["model"], "backbone is missing from model configuration"
         assert "pretrained" in configuration["model"], "pretrained is missing from model configuration"
         assert "freeze" in configuration["model"], "freeze is missing from model configuration"
@@ -34,7 +41,7 @@ class Configuration:
         assert "model_device" in configuration["model"], "model device is missing from model configuration"
 
         assert 2 == len(configuration), "Configuration should have exactly two keys: model and train"
-        assert 7 == len(configuration["train"]), "Train configuration should have exactly 6 keys: epochs, batch_size, learning_rate, momentum, weight_decay, dataset_device, model_device"
+        assert 10 == len(configuration["train"]), "Train configuration should have exactly 10 keys: epochs, batch_size, learning_rate, optimizer, criterion, num_classes, momentum, weight_decay, dataset_device, model_device"
         assert 10 == len(configuration["model"]), "Model configuration should have exactly 10 keys: backbone, pretrained, freeze, cut, dropout, backbone_output_dim, hidden_units, output_vector_size, dataset_device, model_device"
 
     @staticmethod
@@ -46,7 +53,7 @@ class Configuration:
                                   "model_device" : device}
 
         configuration["train"] = {"epochs": 10, "batch_size": 32, "learning_rate": 0.001, "momentum": 0.9,
-                              "weight_decay": 0.0001, "dataset_device": torch.device("cpu"),
+                              "optimizer" : "adam", "criterion" : "SubCenterArcFaceLoss", "num_classes": 10, "weight_decay": 0.0001, "dataset_device": torch.device("cpu"),
                                   "model_device" : device}
         return configuration
 

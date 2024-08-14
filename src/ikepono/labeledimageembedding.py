@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Optional, Union
 
+import numpy as np
 import torch
 from dataclasses import dataclass
 from pathlib import Path
@@ -7,9 +8,10 @@ from pathlib import Path
 
 @dataclass
 class LabeledImageEmbedding:
-    embedding: torch.Tensor
+    embedding: np.ndarray[float]
     label: str
     source: Path
+    dataset_index : int
 
 
 
@@ -21,10 +23,10 @@ class LabeledImageTensor:
     source: Path
 
     @staticmethod
-    def collate(batch):
-        images = torch.stack([item['image'] for item in batch])
-        labels = [item['label'] for item in batch]
-        sources = [item['source'] for item in batch]
+    def collate(labeledImageTensors : list["LabeledImageTensor"]) -> dict[str, Union[torch.Tensor, np.ndarray]]:
+        images = torch.stack([item.image for item in labeledImageTensors])
+        labels = np.array([item.label for item in labeledImageTensors])
+        sources = np.array([item.source for item in labeledImageTensors])
 
         return {
             'images': images,

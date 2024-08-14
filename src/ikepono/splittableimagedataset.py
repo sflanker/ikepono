@@ -40,6 +40,8 @@ class SplittableImageDataset(Dataset):
 
     def __init__(self, paths, labels, transform=None, train=True, test_size=0.2, random_state=42, k=5, device = torch.device('cpu')):
         self.root_dir = None
+        if transform is None:
+            transform = SplittableImageDataset.standard_transform()
         self.transform = transform
         self.train = train
         self.test_size = test_size
@@ -48,7 +50,7 @@ class SplittableImageDataset(Dataset):
         self.image_paths = paths
         self.labels = labels
         self.device = device
-        self.class_to_idx = {label: idx for idx, label in enumerate(np.unique(labels))}
+        self.label_to_idx = {label: idx for idx, label in enumerate(np.unique(labels))}
         self.train_indices, self.test_indices = self._split_indices()
 
 
@@ -66,20 +68,25 @@ class SplittableImageDataset(Dataset):
             if n_samples < self.k:  # Minimum 3 for train and 2 for test
                 raise ValueError(f"Class {class_label} has fewer than 5 samples.")
 
-            n_test = int(n_samples * self.test_size)
-            n_train = n_samples - n_test
+            # Add the first 3 samples of class_label to train
+            train_indices.extend(class_indices[:3])
 
-            if n_train < 3:
-                n_train = 3
-                n_test = n_samples - n_train
+            # Add the next 2 samples of class_label to test
+            test_indices.extend(class_indices[3:5])
 
-            class_train, class_test = train_test_split(
-                class_indices, test_size=n_test, train_size=n_train,
-                random_state=self.random_state
-            )
+            n_test = int((n_samples-5) * self.test_size)
+            n_train = (n_samples - 5) - n_test
 
-            train_indices.extend(class_train)
-            test_indices.extend(class_test)
+            # Add the rest of the samples to train and test
+            if n_test > 0 and n_train > 0:
+                train_additionals, test_additionals = train_test_split(
+                    class_indices[5:], test_size=self.test_size, train_size=(1 - self.test_size),
+                    random_state=self.random_state
+                )
+                train_indices.extend(train_additionals)
+                test_indices.extend(test_additionals)
+            elif n_train > 0:
+                train_indices.extend(class_indices[5:])
 
         return train_indices, test_indices
 
@@ -91,18 +98,26 @@ class SplittableImageDataset(Dataset):
 
     def __getitem__(self, idx : int) ->LabeledImageTensor:
         img_path = self.image_paths[idx]
-        pil_image = Image.open(img_path).convert('RGB')
-        label = self.labels[idx]
 
-        if self.transform:
-            tensor_image = self.transform(pil_image)
-        else:
-            # Minimum xform is to tensor
-            transform = transforms.Compose([transforms.ToTensor()])
-            tensor_image = transform(pil_image)
+        initial_image = Image.open(img_path)
+        pil_image = initial_image.convert('RGB')
+        try:
+            label = self.labels[idx]
+
+            if self.transform:
+                tensor_image = self.transform(pil_image)
+            else:
+                # Minimum xform is to tensor
+                transform = transforms.Compose([transforms.ToTensor()])
+                tensor_image = transform(pil_image)
+        except Exception as e:
+            print(f"Error processing {img_path}: {e}")
+            raise
+        finally:
+            initial_image.close()
         # Move it on to configuration["dataset_device"]
         tensor_image = tensor_image.to(self.device)
-        return LabeledImageTensor(image=tensor_image, label=self.class_to_idx[label], source=img_path)
+        return LabeledImageTensor(image=tensor_image, label=self.label_to_idx[label], source=img_path)
 
     @staticmethod
     def standard_transform() -> transforms.Compose:

@@ -17,6 +17,9 @@
     "learning_rate": 0.001,
     "momentum": 0.9,
     "weight_decay": 0.0001,
+    "num_classes": 10,
+    "optimizer" : "adam",
+    "criterion": "SubCenterArcFaceLoss",
     "dataset_device": "cpu",
     "model_device": "cuda"
   }
