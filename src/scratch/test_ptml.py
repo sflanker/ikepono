@@ -21,3 +21,7 @@ class TestPTML(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+from pytorch_metric_learning import testers
+
+

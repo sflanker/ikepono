@@ -25,7 +25,7 @@ def _init_weights(model: nn.Module) -> None:
             _init_weights(layer)
 
 class ReidentifyModel(nn.Module):
-    def __init__(self, model_configuration, train_configuration):
+    def __init__(self, model_configuration, train_configuration, num_classes: int):
         super(ReidentifyModel, self).__init__()
         self.backbone_name = model_configuration["backbone"]
         self.pretrained = model_configuration["pretrained"]
@@ -51,7 +51,7 @@ class ReidentifyModel(nn.Module):
             optimizer_str=train_configuration["optimizer"],
             criterion_str=train_configuration["criterion"],
             embedding_size=self.output_vector_size,
-            num_classes=train_configuration["num_classes"]
+            num_classes=num_classes
         )
 
     def _initialize_training_parameters(self, lr : float, optimizer_str: str, criterion_str : str, embedding_size: int, num_classes: int) -> None:
@@ -82,7 +82,7 @@ class ReidentifyModel(nn.Module):
             nn.Linear(self.hidden_units, output_vector_size)
         )
 
-    def train(self, vector_store : VectorStore, dataloader, num_epochs : int):
+    def _train(self, vector_store : VectorStore, dataloader, num_epochs : int):
         #TODO assert all needed parameters are set
         assert self.optimizer is not None
         assert self.criterion is not None

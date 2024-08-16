@@ -20,15 +20,14 @@ class Configuration:
         assert "train" in configuration, "train configuration is missing"
 
         assert "epochs" in configuration["train"], "epochs is missing from train configuration"
-        assert "batch_size" in configuration["train"], "batch_size is missing from train configuration"
         assert "learning_rate" in configuration["train"], "learning_rate is missing from train configuration"
-        assert "momentum" in configuration["train"], "momentum is missing from train configuration"
-        assert "weight_decay" in configuration["train"], "weight_decay is missing from train configuration"
         assert "optimizer" in configuration["train"], "optimizer is missing from train configuration"
         assert "criterion" in configuration["train"], "criterion is missing from train configuration"
         assert "dataset_device" in configuration["train"], "dataset device is missing from train configuration"
         assert "model_device" in configuration["train"], "model device is missing from train configuration"
-        assert "num_classes" in configuration["train"], "num_classes is missing from train configuration"
+        assert "train_data_path" in configuration["train"], "train_data_path is missing from train configuration"
+        assert "k" in configuration["train"], "k is missing from train configuration"
+        assert "n_triplets" in configuration["train"], "n_triplets is missing from train configuration"
 
         assert "backbone" in configuration["model"], "backbone is missing from model configuration"
         assert "pretrained" in configuration["model"], "pretrained is missing from model configuration"
@@ -39,10 +38,11 @@ class Configuration:
         assert "output_vector_size" in configuration["model"], "output_vector_size is missing from model configuration"
         assert "dataset_device" in configuration["model"], "dataset device is missing from model configuration"
         assert "model_device" in configuration["model"], "model device is missing from model configuration"
+        assert "artifacts_path" in configuration["model"], "artifacts path is missing from model configuration"
 
         assert 2 == len(configuration), "Configuration should have exactly two keys: model and train"
-        assert 10 == len(configuration["train"]), "Train configuration should have exactly 10 keys: epochs, batch_size, learning_rate, optimizer, criterion, num_classes, momentum, weight_decay, dataset_device, model_device"
-        assert 10 == len(configuration["model"]), "Model configuration should have exactly 10 keys: backbone, pretrained, freeze, cut, dropout, backbone_output_dim, hidden_units, output_vector_size, dataset_device, model_device"
+        assert 9 == len(configuration["train"]), "Train configuration should have exactly 10 keys: epochs, learning_rate, optimizer, criterion, dataset_device, model_device, train_data_path, k, n_triplets"
+        assert 11 == len(configuration["model"]), "Model configuration should have exactly 10 keys: backbone, pretrained, freeze, cut, dropout, backbone_output_dim, hidden_units, output_vector_size, dataset_device, model_device, artifacts_path"
 
     @staticmethod
     def defaults():
@@ -50,7 +50,7 @@ class Configuration:
         device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_built() else "cpu")
         configuration["model"] = {"backbone": "resnet18", "pretrained": True, "freeze": True, "cut": -1, "dropout": 0.5,
                               "backbone_output_dim": 512, "hidden_units": 512, "output_vector_size": 128, "dataset_device": torch.device("cpu"),
-                                  "model_device" : device}
+                                  "model_device" : device, "artifacts_path": "./artifacts"}
 
         configuration["train"] = {"epochs": 10, "batch_size": 32, "learning_rate": 0.001, "momentum": 0.9,
                               "optimizer" : "adam", "criterion" : "SubCenterArcFaceLoss", "num_classes": 10, "weight_decay": 0.0001, "dataset_device": torch.device("cpu"),

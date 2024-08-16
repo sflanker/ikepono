@@ -1,5 +1,6 @@
 import unittest
 from dataclasses import fields
+from typing import Union
 
 import numpy as np
 import torch.nn as nn
@@ -9,6 +10,12 @@ import sys
 import os
 from pathlib import Path
 from pytorch_metric_learning import losses
+from torchvision import transforms as xform
+import torch.optim as optim
+
+from pytorch_metric_learning import losses, testers
+from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
+
 
 from ikepono.configuration import Configuration
 from ikepono.hardtripletsampler import HardTripletBatchSampler
@@ -21,13 +28,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from src.ikepono.reidentifymodel import _init_weights, ReidentifyModel
 from src.ikepono.splittableimagedataset import SplittableImageDataset
 
+
 class ReidentifyModelTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
         cls.model_device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_built() else "cpu")
         cls.dataset_device = torch.device("cpu")
-        cls.data_dir = Path("/mnt/d/scratch_data/mantas/by_name/original/kona")
+        cls.data_dir = Path("/mnt/d/scratch_data/mantas/by_name/inner_crop/kona")
 
 
     def test_initialize_weights_linear(self):
@@ -168,30 +176,36 @@ class ReidentifyModelTests(unittest.TestCase):
     def test_real_dataset(self):
         print("Running test_real_dataset. Remove this from the test suite after train debugged.")
         configuration = Configuration("test_configuration.json")
-        individuals_per_batch = 4
         vector_store = VectorStore(dimension=configuration.model_configuration()["output_vector_size"])
 
-        dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=10)
+        data_dir = configuration.train_configuration()["train_data_path"]
+        k = configuration.train_configuration()["k"]
+        num_epochs = configuration.train_configuration()["epochs"]
+        dataset = SplittableImageDataset.from_directory(root_dir=data_dir, k=k)
         # This isn't a configuration value!
-        configuration.configuration["train"]["num_classes"] = len(set(dataset.labels))
+        num_classes = len(set(dataset.labels))
+        print(f"Num classes: {num_classes}")
         print("Built dataset")
         sampler = HardTripletBatchSampler(dataset, 3)
         loader = DataLoader(dataset, batch_sampler=sampler,
                             collate_fn=LabeledImageTensor.collate)
+        vector_device = configuration.model_configuration()["dataset_device"]
         print("Built loader")
 
-        model = ReidentifyModel(configuration.model_configuration(), configuration.train_configuration())
+        model = ReidentifyModel(configuration.model_configuration(), configuration.train_configuration(), num_classes)
         print("Built model")
-        vector_store.initialize(model.build_labeled_image_embeddings(dataset, torch.device("cpu")))
+        vector_store.initialize(model.build_labeled_image_embeddings(dataset, vector_device))
         sampler.initialize(vector_store)
 
         print("Beginning train")
         # Note that this will take a long time to run
-        losses = model.train(dataloader=loader, vector_store=vector_store, num_epochs=250)
+        losses = model.train(dataloader=loader, vector_store=vector_store, num_epochs=num_epochs)
         print("Finished train")
         for loss in losses:
             print(f"{loss:.1f}", end=", ")
         assert False
+
+
 
     def simple_model(self):
         configuration = Configuration("test_configuration.json")
