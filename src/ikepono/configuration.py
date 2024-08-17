@@ -1,7 +1,8 @@
+import json
+import torch
 from pathlib import Path
 from typing import Optional
-import torch
-import json
+
 
 class Configuration:
     def __init__(self, config_file : Optional[Path] = None):
@@ -41,7 +42,7 @@ class Configuration:
         assert "artifacts_path" in configuration["model"], "artifacts path is missing from model configuration"
 
         assert 2 == len(configuration), "Configuration should have exactly two keys: model and train"
-        assert 9 == len(configuration["train"]), "Train configuration should have exactly 10 keys: epochs, learning_rate, optimizer, criterion, dataset_device, model_device, train_data_path, k, n_triplets"
+        assert 9 == len(configuration["train"]), f"Train configuration should have exactly 9 keys, not {len(configuration['train'])}: epochs, learning_rate, optimizer, criterion, dataset_device, model_device, train_data_path, k, n_triplets"
         assert 11 == len(configuration["model"]), "Model configuration should have exactly 10 keys: backbone, pretrained, freeze, cut, dropout, backbone_output_dim, hidden_units, output_vector_size, dataset_device, model_device, artifacts_path"
 
     @staticmethod
@@ -52,9 +53,9 @@ class Configuration:
                               "backbone_output_dim": 512, "hidden_units": 512, "output_vector_size": 128, "dataset_device": torch.device("cpu"),
                                   "model_device" : device, "artifacts_path": "./artifacts"}
 
-        configuration["train"] = {"epochs": 10, "batch_size": 32, "learning_rate": 0.001, "momentum": 0.9,
-                              "optimizer" : "adam", "criterion" : "SubCenterArcFaceLoss", "num_classes": 10, "weight_decay": 0.0001, "dataset_device": torch.device("cpu"),
-                                  "model_device" : device}
+        configuration["train"] = {"epochs": 10, "learning_rate": 0.001,
+                              "optimizer" : "adam", "criterion" : "SubCenterArcFaceLoss", "dataset_device": torch.device("cpu"),
+                                  "model_device" : device, "train_data_path": "/mnt/d/scratch_data/mantas/by_name/inner_crop/kona", "k" : 5, "n_triplets" : 32}
         return configuration
 
     def load(self, config_file : Path):

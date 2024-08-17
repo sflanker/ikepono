@@ -4576,6 +4576,17 @@ files = [
 torch = "2.3.0"
 
 [[package]]
+name = "torchinfo"
+version = "1.8.0"
+description = "Model summary in PyTorch, based off of the original torchsummary."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "torchinfo-1.8.0-py3-none-any.whl", hash = "sha256:2e911c2918603f945c26ff21a3a838d12709223dc4ccf243407bce8b6e897b46"},
+    {file = "torchinfo-1.8.0.tar.gz", hash = "sha256:72e94b0e9a3e64dc583a8e5b7940b8938a1ac0f033f795457f27e6f4e7afa2e9"},
+]
+
+[[package]]
 name = "torchvision"
 version = "0.18.0"
 description = "image and video datasets and models for torch deep learning"
@@ -5040,4 +5051,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "d22ac5c5010777979bbbf46b0e34c6a027092ceaa32a7d987e428901f837dfee"
+content-hash = "171bd17b8ba04034cf769f2d4ab36166c3a8749505b0ff63d1bb37ec676583be"
