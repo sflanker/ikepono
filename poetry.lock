@@ -3282,6 +3282,29 @@ files = [
 ]
 
 [[package]]
+name = "pytorch-metric-learning"
+version = "2.6.0"
+description = "The easiest way to use deep metric learning in your application. Modular, flexible, and extensible. Written in PyTorch."
+optional = false
+python-versions = ">=3.0"
+files = [
+    {file = "pytorch-metric-learning-2.6.0.tar.gz", hash = "sha256:faa698551d22f5588bf5dfbefa6d1945a1720e12da34c9635c898dcd70dad939"},
+    {file = "pytorch_metric_learning-2.6.0-py3-none-any.whl", hash = "sha256:6755653b3d306a11606480225e30298a8705295a69e15a323541f19ed136952a"},
+]
+
+[package.dependencies]
+numpy = "<2.0"
+scikit-learn = "*"
+torch = ">=1.6.0"
+tqdm = "*"
+
+[package.extras]
+dev = ["black", "flake8", "isort", "nbqa"]
+docs = ["mkdocs-material"]
+with-hooks = ["faiss-gpu (>=1.6.3)", "record-keeper (>=0.9.32)", "tensorboard"]
+with-hooks-cpu = ["faiss-cpu (>=1.6.3)", "record-keeper (>=0.9.32)", "tensorboard"]
+
+[[package]]
 name = "pytz"
 version = "2024.1"
 description = "World timezone definitions, modern and historical"
@@ -4360,6 +4383,26 @@ files = [
 ]
 
 [[package]]
+name = "tqdm"
+version = "4.66.5"
+description = "Fast, Extensible Progress Meter"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "tqdm-4.66.5-py3-none-any.whl", hash = "sha256:90279a3770753eafc9194a0364852159802111925aa30eb3f9d85b0e805ac7cd"},
+    {file = "tqdm-4.66.5.tar.gz", hash = "sha256:e1020aef2e5096702d8a025ac7d16b1577279c9d63f8375b63083e9a5f0fcbad"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+dev = ["pytest (>=6)", "pytest-cov", "pytest-timeout", "pytest-xdist"]
+notebook = ["ipywidgets (>=6)"]
+slack = ["slack-sdk"]
+telegram = ["requests"]
+
+[[package]]
 name = "traitlets"
 version = "5.14.3"
 description = "Traitlets Python configuration system"
@@ -4747,4 +4790,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "460f82987ec955cdd2347e3f17f6703b61fef96e26d68034e4251aa422b414f9"
+content-hash = "10b12eb51f579d6217da6cf431636d269890e65215b31d8df989a10fc9d345ef"
