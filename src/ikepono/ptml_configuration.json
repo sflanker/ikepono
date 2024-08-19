@@ -19,7 +19,7 @@
     "criterion": "SubCenterArcFaceLoss",
     "dataset_device": "cpu",
     "model_device": "cuda",
-    "train_data_path": "/mnt/d/scratch_data/mantas/by_name/inner_crop/kona",
+    "train_data_path": "/mnt/d/scratch_data/mantas/train_valid/inner_crop/kona/",
     "k": 10,
     "n_triplets" : 32
   }
