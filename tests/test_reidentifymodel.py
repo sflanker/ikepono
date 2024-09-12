@@ -1,27 +1,15 @@
-import unittest
-from dataclasses import fields
-from typing import Union
-
-import numpy as np
-import torch.nn as nn
-import torch
-from torch.utils.data import DataLoader
-import sys
 import os
+import sys
+import torch
+import torch.nn as nn
+import unittest
 from pathlib import Path
-from pytorch_metric_learning import losses
-from torchvision import transforms as xform
-import torch.optim as optim
-
-from pytorch_metric_learning import losses, testers
-from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
-
+from torch.utils.data import DataLoader
 
 from ikepono.configuration import Configuration
 from ikepono.hardtripletsampler import HardTripletBatchSampler
-from ikepono.labeledimageembedding import LabeledImageEmbedding, LabeledImageTensor
+from ikepono.labeledimageembedding import LabeledImageTensor
 from ikepono.vectorstore import VectorStore
-from test_hardtripletsampler import SamplerTests
 from test_splittableimagedataset import SplittableImageDatasetTests
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -89,10 +77,11 @@ class ReidentifyModelTests(unittest.TestCase):
             "num_classes": 10,
             "weight_decay": 0.0001,
             "dataset_device": self.dataset_device,
+            "num_individuals" : 61,
             "model_device": self.model_device
         }
 
-        reidentify_model = ReidentifyModel(model_configuration, train_configuration)
+        reidentify_model = ReidentifyModel(model_configuration, train_configuration, 10)
         assert reidentify_model.backbone_name == "resnet18"
         assert reidentify_model.pretrained == True
         assert reidentify_model.freeze == True
@@ -124,12 +113,12 @@ class ReidentifyModelTests(unittest.TestCase):
             "momentum": 0.9,
             "optimizer": "adam",
             "criterion": "SubCenterArcFaceLoss",
-            "num_classes": 10,
+            "num_individuals": 61,
             "weight_decay": 0.0001,
             "dataset_device": self.dataset_device,
             "model_device": self.model_device
         }
-        reidentify_model = ReidentifyModel(model_configuration, train_configuration)
+        reidentify_model = ReidentifyModel(model_configuration, train_configuration, 10)
         img_tensor = torch.randn(32, 3, 224, 224).to(torch.device(model_configuration["model_device"]))
         embedding = reidentify_model(img_tensor)
         assert embedding.shape == (32, 100)
@@ -169,7 +158,7 @@ class ReidentifyModelTests(unittest.TestCase):
 
         il = iter(loader)
         batch = next(il) # Uses sampler
-        batch["images"] = batch["images"].to("cpu")
+        #batch[0] = batch[0].to("cpu")
         loss = model._train_one_batch(batch, vs)
         assert loss.item() > 0, f"Expected loss > 0, got {loss.item()}"
 
@@ -178,7 +167,7 @@ class ReidentifyModelTests(unittest.TestCase):
         configuration = Configuration("test_configuration.json")
         vector_store = VectorStore(dimension=configuration.model_configuration()["output_vector_size"])
 
-        data_dir = configuration.train_configuration()["train_data_path"]
+        data_dir = configuration.train_configuration()["data_path"]
         k = configuration.train_configuration()["k"]
         num_epochs = configuration.train_configuration()["epochs"]
         dataset = SplittableImageDataset.from_directory(root_dir=data_dir, k=k)
@@ -218,7 +207,7 @@ class ReidentifyModelTests(unittest.TestCase):
         sampler = HardTripletBatchSampler(ds, 3)
 
         loader = DataLoader(ds, batch_sampler=sampler, collate_fn=LabeledImageTensor.collate)
-        model = ReidentifyModel(configuration.model_configuration(), configuration.train_configuration())
+        model = ReidentifyModel(configuration.model_configuration(), configuration.train_configuration(), 61)
         vs.initialize(model.build_labeled_image_embeddings(ds, torch.device("cpu")))
         sampler.initialize(vs)
 
@@ -228,7 +217,7 @@ class ReidentifyModelTests(unittest.TestCase):
         attributes_expected = ["backbone_name", "pretrained", "freeze", "cut", "backbone_output_dim",
                                "output_vector_size", "dropout", "hidden_units", "device"]
         configuration = Configuration("test_configuration.json")
-        model = ReidentifyModel(configuration.model_configuration(), configuration.train_configuration())
+        model = ReidentifyModel(configuration.model_configuration(), configuration.train_configuration(), 10)
         for attribute in attributes_expected:
             assert hasattr(model, attribute), f"Expected attribute {attribute} not found in ReidentifyModel"
             assert getattr(model, attribute) is not None, f"Expected attribute {attribute} to be assigned in ReidentifyModel"

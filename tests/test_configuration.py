@@ -1,8 +1,7 @@
-import unittest
-import torch.nn as nn
-import torch
-import sys
 import os
+import sys
+import torch
+import unittest
 from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -19,10 +18,7 @@ class ConfigurationTests(unittest.TestCase):
         assert config.configuration["model"]["backbone_output_dim"] == 512
         assert config.configuration["model"]["hidden_units"] == 512
         assert config.configuration["train"]["epochs"] == 10
-        assert config.configuration["train"]["batch_size"] == 32
         assert config.configuration["train"]["learning_rate"] == 0.001
-        assert config.configuration["train"]["momentum"] == 0.9
-        assert config.configuration["train"]["weight_decay"] == 0.0001
         assert config.configuration["train"]["dataset_device"] == torch.device("cpu")
         assert config.configuration["train"]["model_device"] == torch.device("cuda") if torch.cuda.is_available() else torch.device("mps") if torch.backends.mps.is_built() else torch.device("cpu")
 
@@ -35,10 +31,7 @@ class ConfigurationTests(unittest.TestCase):
         assert config.configuration["model"]["dropout"] == 0.5
         assert config.configuration["model"]["hidden_units"] == 512
         assert config.configuration["train"]["epochs"] == 10
-        assert config.configuration["train"]["batch_size"] == 32
         assert config.configuration["train"]["learning_rate"] == 0.001
-        assert config.configuration["train"]["momentum"] == 0.9
-        assert config.configuration["train"]["weight_decay"] == 0.0001
         assert config.configuration["train"]["dataset_device"] == torch.device("cpu"), f"Device should be cpu but is {config.configuration['train']['dataset_device']}"
         assert config.configuration["train"]["model_device"] == torch.device("cuda") if torch.cuda.is_available() else torch.device("mps") if torch.backends.mps.is_built() else torch.device("cpu"), f"Device should be cpu but is {config.configuration['train']['device']}"
 

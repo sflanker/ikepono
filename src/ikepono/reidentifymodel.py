@@ -1,18 +1,15 @@
-import time
-from pathlib import Path
-from typing import Union, Callable
-
 import mlflow
-import torch.nn as nn
+import numpy as np
+import time
 import timm
 import torch
-import numpy as np
-import functools
+import torch.nn as nn
+from pathlib import Path
 from pytorch_metric_learning import losses
 
 import ikepono.vectorstore as VectorStore
+from ikepono.labeledimagedataset import LabeledImageDataset
 from ikepono.labeledimageembedding import LabeledImageEmbedding
-from ikepono.splittableimagedataset import SplittableImageDataset
 
 
 def _init_weights(model: nn.Module) -> None:
@@ -25,7 +22,7 @@ def _init_weights(model: nn.Module) -> None:
             _init_weights(layer)
 
 class ReidentifyModel(nn.Module):
-    def __init__(self, model_configuration, train_configuration, num_classes: int):
+    def __init__(self, model_configuration, train_configuration, num_known_individuals : int):
         super(ReidentifyModel, self).__init__()
         self.backbone_name = model_configuration["backbone"]
         self.pretrained = model_configuration["pretrained"]
@@ -51,7 +48,7 @@ class ReidentifyModel(nn.Module):
             optimizer_str=train_configuration["optimizer"],
             criterion_str=train_configuration["criterion"],
             embedding_size=self.output_vector_size,
-            num_classes=num_classes
+            num_classes=num_known_individuals
         )
 
     def _initialize_training_parameters(self, lr : float, optimizer_str: str, criterion_str : str, embedding_size: int, num_classes: int) -> None:
@@ -82,7 +79,7 @@ class ReidentifyModel(nn.Module):
             nn.Linear(self.hidden_units, output_vector_size)
         )
 
-    def _train(self, vector_store : VectorStore, dataloader, num_epochs : int):
+    def train(self, vector_store : VectorStore, dataloader, num_epochs : int):
         #TODO assert all needed parameters are set
         assert self.optimizer is not None
         assert self.criterion is not None
@@ -109,7 +106,7 @@ class ReidentifyModel(nn.Module):
                 print(f"Best model saved with loss {best_loss}")
         return losses
 
-    def build_labeled_image_embeddings(self, dataset : SplittableImageDataset, device):
+    def build_labeled_image_embeddings(self, dataset : LabeledImageDataset, device):
         livs = []
         for lit in dataset.train_indices:
             # Unsqueeze for model, which expects a batch dimension
@@ -129,7 +126,7 @@ class ReidentifyModel(nn.Module):
         for batch in train_loader:
             if i % 10 == 0:
                 print(".", end="")
-            assert len(batch["images"]) == 9, f"Expected batch size 9, got {len(batch['images'])}"
+            assert len(batch[0]) == 9, f"Expected batch size 9, got {len(batch[0])}"
             i += 1
             loss = self._train_one_batch(batch=batch, vector_store=vector_store)
             epoch_loss += loss.item()
@@ -140,10 +137,10 @@ class ReidentifyModel(nn.Module):
     def _log(self, message):
         print(message)
 
-    def _train_one_batch(self, batch : dict[str, Union[torch.Tensor, np.ndarray]], vector_store):
+    def _train_one_batch(self, batch : tuple[torch.Tensor, str], vector_store):
         # Get the actual data for these indices (move from dataloader device to model device)
-        image_tensors_dl = batch["images"]
-        label_idxs = batch["labels"]
+        image_tensors_dl = batch[0]
+        label_idxs = batch[1]
         sources = batch["sources"]
 
         batch_size = len(label_idxs)

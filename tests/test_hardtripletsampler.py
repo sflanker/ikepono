@@ -1,12 +1,8 @@
-import unittest
-
 import numpy as np
-import torch.nn as nn
-import torch
-import sys
 import os
+import sys
+import unittest
 from pathlib import Path
-
 from torch.utils.data import DataLoader
 
 from ikepono.labeledimageembedding import LabeledImageEmbedding, LabeledImageTensor
@@ -87,7 +83,8 @@ class SamplerTests(unittest.TestCase):
         vs.initialize(lies)
         loader.batch_sampler.initialize(vs)
         batch = next(iter(loader))
-        assert len(batch["images"]) == 9, f"Expected 9, got {len(batch['images'])}"
+        # Batch is a list of 2-tuples: images, labels
+        assert len(batch[0]) == 9, f"Expected 9, got {len(batch[0])}"
 
     @classmethod
     def simple_sampler(cls):

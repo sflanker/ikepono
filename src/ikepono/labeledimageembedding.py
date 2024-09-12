@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 import numpy as np
 import torch
@@ -23,13 +23,10 @@ class LabeledImageTensor:
     source: Path
 
     @staticmethod
-    def collate(labeledImageTensors : list["LabeledImageTensor"]) -> dict[str, Union[torch.Tensor, np.ndarray]]:
+    def collate(labeledImageTensors: list["LabeledImageTensor"]) -> Tuple[torch.Tensor, torch.Tensor]:
         images = torch.stack([item.image for item in labeledImageTensors])
-        labels = np.array([item.label for item in labeledImageTensors])
+        labels = torch.Tensor([int(item.label) for item in labeledImageTensors]).type(torch.int64)
+        # labels = torch.stack(tensor)
         sources = np.array([item.source for item in labeledImageTensors])
 
-        return {
-            'images': images,
-            'labels': labels,
-            'sources': sources
-        }
+        return images, labels

@@ -26,7 +26,7 @@ class Configuration:
         assert "criterion" in configuration["train"], "criterion is missing from train configuration"
         assert "dataset_device" in configuration["train"], "dataset device is missing from train configuration"
         assert "model_device" in configuration["train"], "model device is missing from train configuration"
-        assert "train_data_path" in configuration["train"], "train_data_path is missing from train configuration"
+        assert "data_path" in configuration["train"], "data_path is missing from train configuration"
         assert "k" in configuration["train"], "k is missing from train configuration"
         assert "n_triplets" in configuration["train"], "n_triplets is missing from train configuration"
 
@@ -55,7 +55,8 @@ class Configuration:
 
         configuration["train"] = {"epochs": 10, "learning_rate": 0.001,
                               "optimizer" : "adam", "criterion" : "SubCenterArcFaceLoss", "dataset_device": torch.device("cpu"),
-                                  "model_device" : device, "train_data_path": "/mnt/d/scratch_data/mantas/by_name/inner_crop/kona", "k" : 5, "n_triplets" : 32}
+                                  "model_device" : device, "data_path": "/mnt/d/scratch_data/mantas/by_name/inner_crop/kona",
+                                  "k" : 5, "n_triplets" : 32}
         return configuration
 
     def load(self, config_file : Path):

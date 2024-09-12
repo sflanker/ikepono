@@ -1,15 +1,16 @@
-import os
-from PIL import Image
 import numpy as np
-from torch.utils.data import Dataset
-from torchvision import transforms
+import os
+import torch
+from PIL import Image
 from collections import defaultdict
 from sklearn.model_selection import train_test_split
-import torch
+from torch.utils.data import Dataset
+from torchvision import transforms
 
 from ikepono.labeledimageembedding import LabeledImageTensor
 
 
+# TODO: Delete this if datasets from train/ valid/ directories are solely to be used
 class SplittableImageDataset(Dataset):
     @classmethod
     def from_directory(cls, root_dir, transform=None, train=True, test_size=0.2, random_state=42, k=5, device = torch.device('cpu')) -> "SplittableImageDataset":

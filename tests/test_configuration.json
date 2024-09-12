@@ -13,13 +13,13 @@
     "artifacts_path" : "/mnt/d/scratch_data/mantas/models"
   },
   "train": {
-    "epochs": 250,
+    "epochs": 10,
     "learning_rate": 0.001,
     "optimizer" : "adam",
     "criterion": "SubCenterArcFaceLoss",
     "dataset_device": "cpu",
     "model_device": "cuda",
-    "train_data_path": "/mnt/d/scratch_data/mantas/by_name/inner_crop/kona",
+    "data_path": "/mnt/d/scratch_data/mantas/train_valid/inner_crop/kona",
     "k": 5,
     "n_triplets" : 32
   }
