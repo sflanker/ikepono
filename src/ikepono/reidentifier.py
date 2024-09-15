@@ -142,6 +142,12 @@ class Reidentifier:
                 train_start = time.time()
                 batch_losses = self._train_all_batches(self.model, loss_func, self.model.device, self.train_loader, optimizer, loss_optimizer,
                                             epoch)
+                # Calculate validation loss
+                val_loss = self._calculate_validation_loss(self.model, loss_func, self.model.device,
+                                                           self.validation_loader)
+                batch_count = len(self.validation_loader)
+                mlflow.log_metric("val_loss", val_loss, step=epoch * batch_count)
+
                 accuracies = self._test_accuracy(self.train_dataset, self.validation_dataset, self.model, accuracy_calculator)
                 step = epoch * len(self.train_loader)
                 # print(f"Step {step} MRR: {accuracies['mean_reciprocal_rank']}")
@@ -181,6 +187,20 @@ class Reidentifier:
 
         tester = testers.BaseTester()
         return tester.get_all_embeddings(stripped_dataset, model)
+
+    def _calculate_validation_loss(self, model, loss_func, device, validation_loader):
+        model.eval()
+        total_loss = 0
+        with torch.no_grad():
+            for loaded_data in validation_loader:
+                img_tensor = loaded_data["images"]
+                label_idxs = loaded_data["label_indexes"]
+                img_tensor, label_idxs = img_tensor.to(device), label_idxs.to(device)
+                embeddings = model(img_tensor)
+                loss = loss_func(embeddings, label_idxs)
+                total_loss += loss.item()
+        model.train()
+        return total_loss / len(validation_loader)
 
     ### compute accuracy using AccuracyCalculator from pytorch-metric-learning ###
     def _test_accuracy(self, train_set, test_set, model, accuracy_calculator):
