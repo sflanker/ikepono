@@ -13,7 +13,7 @@
     "artifacts_path" : "/mnt/d/scratch_data/mantas/models"
   },
   "train": {
-    "epochs": 10,
+    "epochs": 200,
     "learning_rate": 0.001,
     "optimizer" : "adam",
     "criterion": "SubCenterArcFaceLoss",

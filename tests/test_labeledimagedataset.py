@@ -3,8 +3,8 @@ import torch
 import unittest
 
 from ikepono.configuration import Configuration
+from ikepono.indexedimagetensor import IndexedImageTensor
 from ikepono.labeledimagedataset import LabeledImageDataset
-from ikepono.labeledimageembedding import LabeledImageTensor
 
 
 class LabeledImageDatasetTests(unittest.TestCase):
@@ -27,7 +27,7 @@ class LabeledImageDatasetTests(unittest.TestCase):
         self.assertEqual(len(train_labels), len(validation_labels))
         self.assertGreater(len(train_labels), 0)
 
-        loader = torch.utils.data.DataLoader(train_ds, batch_size=n_triplets, shuffle=True, collate_fn=LabeledImageTensor.collate)
+        loader = torch.utils.data.DataLoader(train_ds, batch_size=n_triplets, shuffle=True, collate_fn=IndexedImageTensor.collate)
         self.assertIsNotNone(loader)
 
 

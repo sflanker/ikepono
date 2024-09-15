@@ -79,8 +79,10 @@ class ReidentifyModel(nn.Module):
             nn.Linear(self.hidden_units, output_vector_size)
         )
 
-    def train(self, vector_store : VectorStore, dataloader, num_epochs : int):
+    # Note: This cannot be called `train`, because that's a member variable in base `Module` class
+    def _reidentify_model_train(self, vector_store : VectorStore, dataloader, num_epochs : int):
         #TODO assert all needed parameters are set
+        #TODO deprecated? The main training loop is now in Reidentifier
         assert self.optimizer is not None
         assert self.criterion is not None
         assert self.device is not None
@@ -101,21 +103,27 @@ class ReidentifyModel(nn.Module):
             # Save best model
             if loss < best_loss:
                 best_loss = loss
-                torch.save(self.state_dict(), "best_model.pth")
-                mlflow.log_artifact("best_model.pth")
+                self.save_model()
                 print(f"Best model saved with loss {best_loss}")
         return losses
 
-    def build_labeled_image_embeddings(self, dataset : LabeledImageDataset, device):
+    def save_model(self, filename : str = "best_model.pth"):
+        torch.save(self.state_dict(), filename)
+        maybe_run = mlflow.active_run()
+        if maybe_run is not None:
+            mlflow.log_artifact(filename)
+
+
+    def build_labeled_image_embeddings(self, dataset : LabeledImageDataset, device) -> np.ndarray[LabeledImageEmbedding]:
         livs = []
-        for lit in dataset.train_indices:
+        for lit in dataset:
             # Unsqueeze for model, which expects a batch dimension
-            tensor = self.forward(dataset[lit].image.to(self.device).unsqueeze(0))
+            tensor = self.forward(lit.image.to(self.device).unsqueeze(0))
             # Grab the embedding from the tensor, which is a 1xN tensor
-            embedding = tensor.detach().cpu().numpy()[0]
-            label = dataset.labels[lit]
-            source = dataset.image_paths[lit]
-            livs.append(LabeledImageEmbedding(embedding, label, source, lit))
+            embedding = tensor.detach().cpu().numpy()[0] #TODO: Hardcoded 'cpu()' ok? I think so.
+            label = dataset.idx_to_label[lit.label_idx]
+            source = Path(lit.source)
+            livs.append(LabeledImageEmbedding(embedding, label, source, lit.label_idx))
         return np.array(livs)
 
     def _train_one_epoch(self, train_loader, vector_store):
@@ -126,7 +134,7 @@ class ReidentifyModel(nn.Module):
         for batch in train_loader:
             if i % 10 == 0:
                 print(".", end="")
-            assert len(batch[0]) == 9, f"Expected batch size 9, got {len(batch[0])}"
+            assert len(batch['images']) == 6, f"Expected batch size 6, got {len(batch['images'])}"
             i += 1
             loss = self._train_one_batch(batch=batch, vector_store=vector_store)
             epoch_loss += loss.item()
@@ -137,15 +145,15 @@ class ReidentifyModel(nn.Module):
     def _log(self, message):
         print(message)
 
-    def _train_one_batch(self, batch : tuple[torch.Tensor, str], vector_store):
+    def _train_one_batch(self, batch : dict[str, any], vector_store):
         # Get the actual data for these indices (move from dataloader device to model device)
-        image_tensors_dl = batch[0]
-        label_idxs = batch[1]
+        image_tensors_dl = batch["images"]
+        label_idxs = batch["label_indexes"]
         sources = batch["sources"]
 
         batch_size = len(label_idxs)
         image_tensors = torch.stack([image_tensors_dl[i] for i in range(batch_size)]).to(self.device)
-        label_tensor = torch.from_numpy(label_idxs).long().to(self.device)
+        label_tensor = label_idxs.to(self.device)
         # Assert they are the same batch size
         assert len(image_tensors) == len(label_tensor)
 
@@ -162,8 +170,8 @@ class ReidentifyModel(nn.Module):
         self.optimizer.step()
 
         for i, source in enumerate(sources):
-            label = vector_store.label_for_source(source)
+            label = vector_store.label_for_source(Path(source))
             assert label == Path(source).parent.name
-            vector_store.update_or_add_vector(source, embeddings[i].detach().cpu().numpy(), label)
+            vector_store.update_or_add_vector(Path(source), embeddings[i].detach().cpu().numpy(), label)
 
         return loss

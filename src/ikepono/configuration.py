@@ -1,9 +1,12 @@
 import json
-import torch
 from pathlib import Path
 from typing import Optional
 
+import torch
 
+
+#TODO: Both train and model configurations have device. That should be a single value. More of a model thing. But maybe I should rename model configuration to reidentifier configuration.
+#TODO: Move mlflow configuration values into here (tracking_uri, experiment_name, artifacts_path)
 class Configuration:
     def __init__(self, config_file : Optional[Path] = None):
         self.configuration = {}
@@ -63,6 +66,14 @@ class Configuration:
         with open(config_file, 'r') as f:
             configuration = json.load(f)
         return configuration
+
+    def save(self, config_file : Path):
+        dataset_device_name = self.train_configuration()["dataset_device"].type
+        model_device_name = self.train_configuration()["model_device"].type
+        self.configuration["train"]["dataset_device"] = dataset_device_name
+        self.configuration["train"]["model_device"] = model_device_name
+        with open(config_file, 'w') as f:
+            json.dump(self.configuration, f)
 
     def train_configuration(self):
         return self.configuration["train"]

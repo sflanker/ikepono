@@ -1,11 +1,12 @@
-import unittest
-import torch.nn as nn
-import torch
-import sys
 import os
-from pathlib import Path
 import platform
-from torchvision import transforms
+import sys
+import unittest
+from pathlib import Path
+
+import numpy as np
+import torch
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.ikepono.splittableimagedataset import SplittableImageDataset
 
@@ -26,8 +27,8 @@ class SplittableImageDatasetTests(unittest.TestCase):
         assert len(paths) == len(labels)
         assert len(paths) == 20
         dataset = SplittableImageDataset(paths=paths, labels=labels, k=4)
-        dataset.train_indices = [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17]
-        dataset.test_indices = [8, 9, 18, 19]
+        dataset.train_indices = [np.int64(x) for x in [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17]]
+        dataset.test_indices =  [np.int64(x) for x in [8, 9, 18, 19]]
         return dataset
 
     def setUp(self):
@@ -81,7 +82,7 @@ class SplittableImageDatasetTests(unittest.TestCase):
         xform = SplittableImageDataset.standard_transform()
         dataset = SplittableImageDataset.from_directory(root_dir=self.data_dir, k=7, transform=xform)
         lit = dataset[0]
-        image, label_idx, path = lit.image, lit.label, lit.source
+        image, label_idx, path = lit.image, lit.label_idx, lit.source
         self.assertEqual(torch.Size([3, 224, 224]), image.size())
         self.assertEqual(0, label_idx)
         self.assertEqual(os.path.join(self.data_dir, 'Akari', 'Akari_20140330_01.jpg'), path)

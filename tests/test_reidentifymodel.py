@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from ikepono.configuration import Configuration
 from ikepono.hardtripletsampler import HardTripletBatchSampler
-from ikepono.labeledimageembedding import LabeledImageTensor
+from ikepono.indexedimagetensor import IndexedImageTensor
 from ikepono.vectorstore import VectorStore
 from test_splittableimagedataset import SplittableImageDatasetTests
 
@@ -132,8 +132,8 @@ class ReidentifyModelTests(unittest.TestCase):
         assert vs.get_initialized() == True
         loader.batch_sampler.initialize(vs)
 
-        loss = model.train(dataloader=loader, vector_store=vs, num_epochs=20)
-        assert loss >= 0, f"Expected non-negative loss, got {loss}" # With simple data, can get loss = 0.0 by memorizing input
+        losses = model._reidentify_model_train(dataloader=loader, vector_store=vs, num_epochs=20)
+        assert losses[0] >= 0, f"Expected non-negative loss, got {loss}" # With simple data, can get loss = 0.0 by memorizing input
 
     def test_train_one_epoch(self):
         model, loader, vs = self.simple_model()
@@ -162,6 +162,7 @@ class ReidentifyModelTests(unittest.TestCase):
         loss = model._train_one_batch(batch, vs)
         assert loss.item() > 0, f"Expected loss > 0, got {loss.item()}"
 
+    @unittest.skip("This test is slow and uses real data. Full epochs.")
     def test_real_dataset(self):
         print("Running test_real_dataset. Remove this from the test suite after train debugged.")
         configuration = Configuration("test_configuration.json")
@@ -177,7 +178,7 @@ class ReidentifyModelTests(unittest.TestCase):
         print("Built dataset")
         sampler = HardTripletBatchSampler(dataset, 3)
         loader = DataLoader(dataset, batch_sampler=sampler,
-                            collate_fn=LabeledImageTensor.collate)
+                            collate_fn=IndexedImageTensor.collate)
         vector_device = configuration.model_configuration()["dataset_device"]
         print("Built loader")
 
@@ -188,7 +189,7 @@ class ReidentifyModelTests(unittest.TestCase):
 
         print("Beginning train")
         # Note that this will take a long time to run
-        losses = model.train(dataloader=loader, vector_store=vector_store, num_epochs=num_epochs)
+        losses = model._reidentify_model_train(dataloader=loader, vector_store=vector_store, num_epochs=num_epochs)
         print("Finished train")
         for loss in losses:
             print(f"{loss:.1f}", end=", ")
@@ -206,7 +207,7 @@ class ReidentifyModelTests(unittest.TestCase):
 
         sampler = HardTripletBatchSampler(ds, 3)
 
-        loader = DataLoader(ds, batch_sampler=sampler, collate_fn=LabeledImageTensor.collate)
+        loader = DataLoader(ds, batch_sampler=sampler, collate_fn=IndexedImageTensor.collate)
         model = ReidentifyModel(configuration.model_configuration(), configuration.train_configuration(), 61)
         vs.initialize(model.build_labeled_image_embeddings(ds, torch.device("cpu")))
         sampler.initialize(vs)

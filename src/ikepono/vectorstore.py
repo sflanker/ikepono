@@ -1,11 +1,9 @@
-import numpy as np
-import faiss
-from typing import List, Tuple, Dict, Any
+from pathlib import Path
 from typing import Iterable as Iter
+from typing import List, Tuple, Dict, Any
 
-import torch
-from torch import Tensor
-
+import faiss
+import numpy as np
 from ikepono.labeledimageembedding import LabeledImageEmbedding
 
 
@@ -20,14 +18,16 @@ class VectorStore:
         self.vector_id_to_label: Dict[int, str] = {}
         self.vector_id_to_source: Dict[int, str] = {}
         self.label_to_dataset_ids: Dict[str, List[int]] = {}
+        self.dataset_id_to_label: Dict[int, str] = {}
         self.source_to_dataset_id: Dict[str, int] = {}
         self.vector_store: Dict[int, np.ndarray] = {}  # Store vectors separately
         self._initialized: bool = False
 
-    def _add_embedding(self, embedding: np.ndarray, label: str, source: str, dataset_index : int) -> None:
+    def _add_embedding(self, embedding: np.ndarray, label: str, source: Path, dataset_index : np.int64) -> None:
         assert isinstance(embedding, np.ndarray), f"Expected np.ndarray, got {type(embedding)}"
         assert isinstance(label, str), f"Expected str, got {type(label)}"
-        assert isinstance(source, str), f"Expected str, got {type(source)}"
+        assert isinstance(source, Path), f"Expected Path, got {type(source)}"
+        assert isinstance(dataset_index, np.int64), f"Expected int64, got {type(dataset_index)}"
 
         vector_id: int = self.vector_id_counter
         # Note that FAISS is CPU, since FAISS GPU is overkill for mere hundreds of vectors
@@ -35,6 +35,7 @@ class VectorStore:
         if label not in self.label_to_dataset_ids:
             self.label_to_dataset_ids[label] = []
         self.label_to_dataset_ids[label].append(dataset_index)
+        self.dataset_id_to_label[dataset_index] = label
         self.dataset_id_to_vector_id[dataset_index] = vector_id
         self.vector_id_to_dataset_id[vector_id] = dataset_index
         ids = np.array([vector_id]).astype('int64')
@@ -49,6 +50,7 @@ class VectorStore:
 
     def initialize(self, livs : Iter[np.ndarray[LabeledImageEmbedding]]) -> None:
         assert self._initialized == False, "VectorStore already initialized"
+        assert isinstance(livs[0].source, Path), f"Expected Path, got {type(livs[0].source)}"
         self._add_labeled_image_embeddings(livs)
         self._initialized = True
 
@@ -58,10 +60,10 @@ class VectorStore:
 
     def _add_labeled_image_embeddings(self, livs : Iter[LabeledImageEmbedding]) -> None:
         for liv in livs:
-            self._add_embedding(liv.embedding, liv.label, liv.source, liv.dataset_index)
+            self._add_embedding(liv.embedding, liv.label, liv.source, np.int64(liv.dataset_index))
 
-    def update_or_add_vector(self, source: str, new_vector: np.ndarray, new_label: str = None) -> None:
-        assert isinstance(source, str), f"Expected str, got {type(source)}"
+    def update_or_add_vector(self, source: Path, new_vector: np.ndarray, new_label: str = None) -> None:
+        assert isinstance(source, Path), f"Expected path, got {type(source)}"
         assert isinstance(new_vector, np.ndarray), f"Expected np.ndarray, got {type(new_vector)}"
         assert new_label is None or isinstance(new_label, str), f"Expected str or None, got {type(new_label)}"
 

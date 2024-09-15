@@ -1,28 +1,22 @@
+import mlflow
+import numpy as np
 import os
 import time
-from pathlib import Path
-from typing import Union
-
 import torch
-import numpy as np
-from torch import optim
-
-from ikepono.configuration import Configuration
-
 from pytorch_metric_learning import losses, testers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
+from torch import optim
 from torchvision import transforms as xform
+from typing import Union
 
-from mlflow.tracking import MlflowClient
-import mlflow
-
+from ikepono.configuration import Configuration
 from ikepono.reidentifymodel import ReidentifyModel
 from ikepono.splittableimagedataset import SplittableImageDataset
 
 
 def _ptml_train(model, loss_func, device, train_loader, optimizer, loss_optimizer, epoch):
     batch_losses = []
-    model.train()
+    model._reidentify_model_train()
     batch_count = len(train_loader)
     for batch_idx, (data, labels) in enumerate(train_loader):
         data, labels = data.to(device), labels.to(device)
@@ -41,7 +35,7 @@ def _ptml_train(model, loss_func, device, train_loader, optimizer, loss_optimize
 
 ### convenient function from pytorch-metric-learning ###
 def _get_all_embeddings(dataset, model):
-    stripped_dataset = [(lit.image, lit.label) for lit in dataset]
+    stripped_dataset = [(lit.image, lit.label_idx) for lit in dataset]
 
     tester = testers.BaseTester()
     return tester.get_all_embeddings(stripped_dataset, model)
@@ -65,7 +59,7 @@ def _ptml_test(train_set, test_set, model, accuracy_calculator):
 
 def _ptml_collate(labeledImageTensors: list["LabeledImageTensor"]) -> dict[str, Union[torch.Tensor, np.ndarray]]:
     images = torch.stack([item.image for item in labeledImageTensors])
-    labels = torch.Tensor([int(item.label) for item in labeledImageTensors]).type(torch.int64)
+    labels = torch.Tensor([int(item.label_idx) for item in labeledImageTensors]).type(torch.int64)
     # labels = torch.stack(tensor)
     sources = np.array([item.source for item in labeledImageTensors])
 

@@ -1,12 +1,13 @@
-import numpy as np
 import os
 import sys
 import unittest
 from pathlib import Path
-from torch.utils.data import DataLoader
 
-from ikepono.labeledimageembedding import LabeledImageEmbedding, LabeledImageTensor
+import numpy as np
+from ikepono.indexedimagetensor import IndexedImageTensor
+from ikepono.labeledimageembedding import LabeledImageEmbedding
 from ikepono.splittableimagedataset import SplittableImageDataset
+from torch.utils.data import DataLoader
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.ikepono.hardtripletsampler import HardTripletBatchSampler
@@ -22,12 +23,13 @@ class SamplerTests(unittest.TestCase):
         lies = []
         for i in cls._dataset.train_indices:
             v = np.random.rand(128)
-            lie = LabeledImageEmbedding(embedding=v, label=cls._dataset.labels[i], source=cls._dataset.image_paths[i], dataset_index=i)
+            lie = LabeledImageEmbedding(embedding=v, label=cls._dataset.labels[i], source=Path(cls._dataset.image_paths[i]), dataset_index=np.int64(i))
             lies.append(lie)
         # OK, so the problem is that I need to pass down the dataset index to the vector store
         cls._vector_store.initialize(lies)
-        for source in cls._vector_store.all_sources():
-            index_in_dataset = cls._dataset.image_paths.index(source)
+        for path in cls._vector_store.all_sources():
+            path_str = str(path)
+            index_in_dataset = cls._dataset.image_paths.index(path_str)
             assert index_in_dataset in cls._dataset.train_indices, f"Expected {index_in_dataset} to be in train indices {cls._dataset.train_indices}"
 
     def test_len(self):
@@ -73,18 +75,18 @@ class SamplerTests(unittest.TestCase):
         print("Built dataset")
         sampler = HardTripletBatchSampler(dataset, 3)
         loader = DataLoader(dataset, batch_sampler=sampler,
-                            collate_fn=LabeledImageTensor.collate)
+                            collate_fn=IndexedImageTensor.collate)
         vs = VectorStore(dimension=128)
         lies = []
         for i in dataset.train_indices:
             v = np.random.rand(128)
-            lie = LabeledImageEmbedding(embedding=v, label=dataset.labels[i], source=dataset.image_paths[i], dataset_index=i)
+            lie = LabeledImageEmbedding(embedding=v, label=dataset.labels[i], source=Path(dataset.image_paths[i]), dataset_index=i)
             lies.append(lie)
         vs.initialize(lies)
         loader.batch_sampler.initialize(vs)
         batch = next(iter(loader))
         # Batch is a list of 2-tuples: images, labels
-        assert len(batch[0]) == 9, f"Expected 9, got {len(batch[0])}"
+        assert len(batch["images"]) == 9, f"Expected 9, got {len(batch['images'])}"
 
     @classmethod
     def simple_sampler(cls):
@@ -95,3 +97,6 @@ class SamplerTests(unittest.TestCase):
         sampler = HardTripletBatchSampler(dataset, n_triplets)
         sampler.initialize(cls._vector_store)
         return sampler
+
+if __name__ == "__main__":
+    unittest.main()

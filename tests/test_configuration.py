@@ -1,8 +1,9 @@
 import os
 import sys
-import torch
 import unittest
 from pathlib import Path
+
+import torch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.ikepono.configuration import Configuration
@@ -40,3 +41,7 @@ class ConfigurationTests(unittest.TestCase):
         config.configuration.pop("model")
         with self.assertRaises(AssertionError):
             Configuration.validate(config.configuration)
+
+
+if __name__ == "__main__":
+    unittest.main()

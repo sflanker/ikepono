@@ -1,13 +1,14 @@
-import numpy as np
 import os
+from collections import defaultdict
+from pathlib import Path
+
+import numpy as np
 import torch
 from PIL import Image
-from collections import defaultdict
+from ikepono.indexedimagetensor import IndexedImageTensor
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
 from torchvision import transforms
-
-from ikepono.labeledimageembedding import LabeledImageTensor
 
 
 # TODO: Delete this if datasets from train/ valid/ directories are solely to be used
@@ -52,8 +53,12 @@ class SplittableImageDataset(Dataset):
         self.labels = labels
         self.device = device
         self.label_to_idx = {label: idx for idx, label in enumerate(np.unique(labels))}
+        self.idx_to_label = {idx: label for label, idx in self.label_to_idx.items()}
         self.train_indices, self.test_indices = self._split_indices()
-
+        self.source_to_label = {}
+        for p in paths:
+            path = Path(p)
+            self.source_to_label[path] = path.parent.name
 
     def _split_indices(self) -> tuple[list[int], list[int]]:
         indices = np.arange(len(self.image_paths))
@@ -97,13 +102,14 @@ class SplittableImageDataset(Dataset):
         else:
             return len(self.test_indices)
 
-    def __getitem__(self, idx : int) ->LabeledImageTensor:
+    def __getitem__(self, idx : int) ->IndexedImageTensor:
         img_path = self.image_paths[idx]
 
         initial_image = Image.open(img_path)
         pil_image = initial_image.convert('RGB')
         try:
-            label = self.labels[idx]
+            label = self.source_to_label[Path(img_path)]
+            label_idx = self.label_to_idx[label]
 
             if self.transform:
                 tensor_image = self.transform(pil_image)
@@ -118,7 +124,9 @@ class SplittableImageDataset(Dataset):
             initial_image.close()
         # Move it on to configuration["dataset_device"]
         tensor_image = tensor_image.to(self.device)
-        return LabeledImageTensor(image=tensor_image, label=self.label_to_idx[label], source=img_path)
+        if label_idx > 60:
+            print("Boom")
+        return IndexedImageTensor(image=tensor_image, label_idx=label_idx, source=img_path)
 
     @staticmethod
     def standard_transform() -> transforms.Compose:
