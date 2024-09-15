@@ -13,15 +13,17 @@ from torchvision import transforms as xforms
 class LabeledImageDataset(Dataset):
 
     @classmethod
-    def from_directory(cls, root_dir, transform=None, device = torch.device('cpu')) -> "LabeledImageDataset":
+    def from_directory(cls, root_dir, transform=None, device = torch.device('cpu'), k:int = 5) -> "LabeledImageDataset":
         if transform is None:
             transform = LabeledImageDataset.standard_transform_for_training()
         image_paths = []
         for root, _, files in os.walk(root_dir):
-            for file in files:
-                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
-                    full_path = Path(os.path.join(root, file))
-                    image_paths.append(full_path)
+            # Only add direactory if it has at least k images
+            if len(files) >= k:
+                for file in files:
+                    if file.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
+                        full_path = Path(os.path.join(root, file))
+                        image_paths.append(full_path)
         return cls(image_paths, transform, device)
 
     def __init__(self, paths, transform: xforms.Compose, train=True, device = torch.device('cpu')):

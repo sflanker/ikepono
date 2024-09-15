@@ -7,6 +7,7 @@ from pathlib import Path
 from pytorch_metric_learning import losses, testers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 from torch import optim
+import numpy as np
 
 from ikepono.configuration import Configuration
 from ikepono.hardtripletsampler import HardTripletBatchSampler
@@ -80,11 +81,11 @@ class Reidentifier:
         validation_dir = Path(data_root_dir) / "valid"
         self.dataset_device = self.configuration.train_configuration()["dataset_device"]
         self.train_dataset = LabeledImageDataset.from_directory(training_dir,
-                                                                device=self.dataset_device)
+                                                                device=self.dataset_device, k=configuration.train_configuration()["k"])
         self.sampler = HardTripletBatchSampler(self.train_dataset, configuration.train_configuration()["n_triplets"])
 
         self.validation_dataset = LabeledImageDataset.from_directory(validation_dir,
-                                                                     device=self.dataset_device)
+                                                                     device=self.dataset_device, k=configuration.train_configuration()["k"])
 
         self.train_loader = DataLoader(self.train_dataset,
                                                         batch_size=self.configuration.train_configuration()["n_triplets"],
@@ -133,6 +134,9 @@ class Reidentifier:
             mlflow.log_param("loss_optimizer", "Adam")
             mlflow.log_param("loss_optimizer_lr", 1e-4)
             mlflow.log_param("optimizer_lr", 0.001)
+            mlflow.log_param("n_triplets", self.configuration.train_configuration()["n_triplets"])
+            mlflow.log_param("n_batches_trainset", len(self.train_loader) / (self.configuration.train_configuration()["n_triplets"]))
+            mlflow.log_param("n_batches_validationset", len(self.validation_loader) / (self.configuration.train_configuration()["n_triplets"]))
             accuracy_calculator = AccuracyCalculator(
                 include=("precision_at_1", "mean_reciprocal_rank", "mean_average_precision_at_r"), k="max_bin_count")
 
@@ -147,6 +151,11 @@ class Reidentifier:
                                                            self.validation_loader)
                 batch_count = len(self.validation_loader)
                 mlflow.log_metric("val_loss", val_loss, step=epoch * batch_count)
+                # Ratio of validation loss to training loss
+                loss_ratio = val_loss / np.mean(batch_losses)
+                mlflow.log_metric("val_loss_ratio", loss_ratio, step=epoch * batch_count)
+                print(f"Epoch {epoch} Validation Loss: {val_loss} Loss Ratio: {loss_ratio}")
+
 
                 accuracies = self._test_accuracy(self.train_dataset, self.validation_dataset, self.model, accuracy_calculator)
                 step = epoch * len(self.train_loader)
