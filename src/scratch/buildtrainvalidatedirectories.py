@@ -49,8 +49,8 @@ class BuildTrainValidateDirectories:
 
 
 if __name__ == "__main__":
-    images_dir = Path("/mnt/d/scratch_data/mantas/by_name/inner_crop/kona")
-    output_dir = Path("/mnt/d/scratch_data/mantas/train_valid/inner_crop/kona")
+    images_dir = Path("/mnt/d/scratch_data/mantas/fetch_images/data_dir")
+    output_dir = Path("/mnt/d/scratch_data/mantas/train_valid/kona")
 
     train_dir = output_dir / "train"
     valid_dir = output_dir / "valid"

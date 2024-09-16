@@ -13,7 +13,7 @@ model = torchvision.models.detection.maskrcnn_resnet50_fpn(weights=True)
 model.eval();
 
 from torchvision.io import read_image
-img_path = "/mnt/d/scratch_data/mantas/by_name/original/kona/Akari/Akari_20191227_01.jpg"
+img_path = "/mnt/d/scratch_data/mantas/by_name/original_2023/kona/Akari/Akari_20191227_01.jpg"
 img = read_image(img_path)
 img
 

@@ -27,5 +27,8 @@ class ReidentifierTests(unittest.TestCase):
         self.assertTrue(training_time_in_seconds > 10)
         self.assertTrue(best_mrr > 0.0)
 
+    def test_inference(self ):
+        assert False, "Not implemented"
+
 if __name__ == '__main__':
     unittest.main()

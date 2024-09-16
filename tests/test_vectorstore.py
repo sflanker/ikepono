@@ -151,5 +151,11 @@ class VectorStoreTests(unittest.TestCase):
         idx = store.dataset_id_for_source(Path("source_foo_0"))
         assert idx == 0, f"Expected 0, got {idx}"
 
+    def test_save(self):
+        assert False
+
+    def test_load(self):
+        assert False
+
 if __name__ == '__main__':
     unittest.main()

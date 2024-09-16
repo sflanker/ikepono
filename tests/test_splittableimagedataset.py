@@ -15,7 +15,7 @@ class SplittableImageDatasetTests(unittest.TestCase):
 
     @classmethod
     def simple_dataset(cls):
-        data_dir = Path("/mnt/d/scratch_data/mantas/by_name/original/kona")
+        data_dir = Path("/mnt/d/scratch_data/mantas/by_name/original_2023/kona")
         akara_dir = os.path.join(data_dir, 'Akari')
         akari_image_files = [os.path.join(akara_dir, f) for f in os.listdir(akara_dir) if f.endswith('.jpg')][:10]
         yvet_dir = os.path.join(data_dir, 'Vallaray')

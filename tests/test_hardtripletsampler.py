@@ -70,7 +70,7 @@ class SamplerTests(unittest.TestCase):
             assert sample in SamplerTests._dataset.train_indices, f"Expected {sample} to be in train indices {SamplerTests._dataset.train_indices}, got {sample}"
 
     def test_loader(self):
-        data_dir = Path("/mnt/d/scratch_data/mantas/by_name/original/kona")
+        data_dir = Path("/mnt/d/scratch_data/mantas/by_name/original_2023/kona")
         dataset = SplittableImageDataset.from_directory(root_dir=data_dir, k=10)
         print("Built dataset")
         sampler = HardTripletBatchSampler(dataset, 3)
