@@ -1,15 +1,15 @@
-import mlflow
-import numpy as np
 import time
-import timm
 import torch
 import torch.nn as nn
-from pathlib import Path
-from pytorch_metric_learning import losses
 
 import ikepono.vectorstore as VectorStore
+import mlflow
+import numpy as np
+import timm
 from ikepono.labeledimagedataset import LabeledImageDataset
 from ikepono.labeledimageembedding import LabeledImageEmbedding
+from pathlib import Path
+from pytorch_metric_learning import losses
 
 
 def _init_weights(model: nn.Module) -> None:

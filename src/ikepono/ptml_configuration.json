@@ -10,17 +10,17 @@
     "output_vector_size": 128,
     "dataset_device": "cpu",
     "model_device": "cuda",
-    "artifacts_path" : "/mnt/d/scratch_data/mantas/models"
+    "artifacts_path": "/mnt/d/scratch_data/mantas/models"
   },
   "train": {
     "epochs": 500,
     "learning_rate": 0.001,
-    "optimizer" : "adam",
+    "optimizer": "adam",
     "criterion": "SubCenterArcFaceLoss",
     "dataset_device": "cpu",
     "model_device": "cuda",
     "train_data_path": "/mnt/d/scratch_data/mantas/train_valid/inner_crop/kona/",
     "k": 10,
-    "n_triplets" : 32
+    "n_triplets": 32
   }
 }

@@ -1,8 +1,8 @@
+import torch
+
 import json
 from pathlib import Path
 from typing import Optional
-
-import torch
 
 
 #TODO: Both train and model configurations have device. That should be a single value. More of a model thing. But maybe I should rename model configuration to reidentifier configuration.

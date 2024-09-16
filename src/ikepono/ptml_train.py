@@ -1,17 +1,17 @@
+import time
+import torch
+from torch import optim
+from torchvision import transforms as xform
+
 import mlflow
 import numpy as np
 import os
-import time
-import torch
-from pytorch_metric_learning import losses, testers
-from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
-from torch import optim
-from torchvision import transforms as xform
-from typing import Union
-
 from ikepono.configuration import Configuration
 from ikepono.reidentifymodel import ReidentifyModel
 from ikepono.splittableimagedataset import SplittableImageDataset
+from pytorch_metric_learning import losses, testers
+from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
+from typing import Union
 
 
 def _ptml_train(model, loss_func, device, train_loader, optimizer, loss_optimizer, epoch):

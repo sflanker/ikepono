@@ -8,5 +8,4 @@ class LabeledImageEmbedding:
     embedding: np.ndarray[float]
     label: str
     source: Path
-    dataset_index : int
-
+    dataset_index: int

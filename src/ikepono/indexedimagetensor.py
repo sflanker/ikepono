@@ -1,5 +1,6 @@
-import numpy as np
 import torch
+
+import numpy as np
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple

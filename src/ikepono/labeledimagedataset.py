@@ -1,12 +1,12 @@
-import os
-from pathlib import Path
-
-import numpy as np
 import torch
-from PIL import Image
-from ikepono.indexedimagetensor import IndexedImageTensor
 from torch.utils.data import Dataset
 from torchvision import transforms as xforms
+
+import numpy as np
+import os
+from PIL import Image
+from ikepono.indexedimagetensor import IndexedImageTensor
+from pathlib import Path
 
 
 # TODO: Delete this if datasets from train/ valid/ directories are solely to be used

@@ -1,20 +1,20 @@
-import mlflow
-import os
 import time
 import torch
-from torch.utils.data import DataLoader
-from pathlib import Path
-from pytorch_metric_learning import losses, testers
-from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 from torch import optim
-import numpy as np
+from torch.utils.data import DataLoader
 
+import mlflow
+import numpy as np
+import os
 from ikepono.configuration import Configuration
 from ikepono.hardtripletsampler import HardTripletBatchSampler
 from ikepono.indexedimagetensor import IndexedImageTensor
 from ikepono.labeledimagedataset import LabeledImageDataset
 from ikepono.reidentifymodel import ReidentifyModel
 from ikepono.vectorstore import VectorStore
+from pathlib import Path
+from pytorch_metric_learning import losses, testers
+from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 
 
 class Reidentifier:

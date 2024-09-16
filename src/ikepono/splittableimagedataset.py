@@ -1,14 +1,14 @@
-import os
-from collections import defaultdict
-from pathlib import Path
-
-import numpy as np
 import torch
-from PIL import Image
-from ikepono.indexedimagetensor import IndexedImageTensor
-from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
 from torchvision import transforms
+
+import numpy as np
+import os
+from PIL import Image
+from collections import defaultdict
+from ikepono.indexedimagetensor import IndexedImageTensor
+from pathlib import Path
+from sklearn.model_selection import train_test_split
 
 
 # TODO: Delete this if datasets from train/ valid/ directories are solely to be used

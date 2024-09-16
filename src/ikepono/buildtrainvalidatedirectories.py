@@ -6,7 +6,9 @@ from pathlib import Path
 class BuildTrainValidateDirectories:
 
     @staticmethod
-    def build(images_dir : Path, train_dir : Path, valid_dir : Path, k: int, test_percent : float):
+    def build(
+        images_dir: Path, train_dir: Path, valid_dir: Path, k: int, test_percent: float
+    ):
         # Create the train and valid directories
         os.makedirs(train_dir, exist_ok=True)
         os.makedirs(valid_dir, exist_ok=True)
@@ -15,7 +17,9 @@ class BuildTrainValidateDirectories:
         source_dirs = [d for d in images_dir.iterdir() if d.is_dir()]
 
         for s in source_dirs:
-            BuildTrainValidateDirectories.build_train_valid(s, train_dir, valid_dir, k, test_percent)
+            BuildTrainValidateDirectories.build_train_valid(
+                s, train_dir, valid_dir, k, test_percent
+            )
 
     @staticmethod
     def build_train_valid(source_dir, train_dir, valid_dir, k, test_percent):
@@ -42,6 +46,7 @@ class BuildTrainValidateDirectories:
             os.symlink(images, train_source_dir / images.name)
         for images in test_images:
             os.symlink(images, valid_source_dir / images.name)
+
 
 if __name__ == "__main__":
     images_dir = Path("/mnt/d/scratch_data/mantas/by_name/inner_crop/kona")

@@ -1,6 +1,6 @@
-from datetime import datetime
 import time
 
+from datetime import datetime
 from ikepono.configuration import Configuration
 from ikepono.reidentifier import Reidentifier
 
