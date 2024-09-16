@@ -139,6 +139,12 @@ class Reidentifier:
             mlflow.log_param("n_batches_validationset", len(self.validation_loader) / (self.configuration.train_configuration()["n_triplets"]))
             accuracy_calculator = AccuracyCalculator(
                 include=("precision_at_1", "mean_reciprocal_rank", "mean_average_precision_at_r"), k="max_bin_count")
+            # Get the mlflow run ID
+            run_id = active_run.info.run_id
+            mlflow.log_param("run_id", run_id)
+            # Get the mlflow run name
+            run_name = active_run.info.run_name
+            mlflow.log_param("run_name", run_name)
 
             start = time.time()
             best_mrr = 0.0
@@ -164,7 +170,10 @@ class Reidentifier:
                 epoch_mrr = accuracies["mean_reciprocal_rank"]
                 if epoch_mrr > best_mrr:
                     best_mrr = epoch_mrr
-                    self.model.save_model(self.artifacts_path + f"/model_{experiment_id}.pth")
+                    self.model.save_model(self.artifacts_path + f"/model_{run_id}.pth")
+                    # Save the vector store
+                    self.vector_store.save(self.artifacts_path + f"/vector_store_{run_id}.pth")
+
                 train_end = time.time()
                 print(f"Epoch {epoch} took {train_end - train_start:.1f} seconds")
             return time.time() - start, best_mrr
