@@ -1,11 +1,9 @@
-from typing import List, Iterable
-
-import numpy as np
 from torch.utils.data import Sampler
 
-from ikepono.labeledimageembedding import LabeledImageEmbedding
+import numpy as np
 from ikepono.splittableimagedataset import SplittableImageDataset
 from ikepono.vectorstore import VectorStore
+from typing import Iterable
 
 
 class HardTripletBatchSampler(Sampler):
@@ -16,7 +14,6 @@ class HardTripletBatchSampler(Sampler):
         self.individuals = None
         self._initialized = False
 
-
     def initialize(self, initialized_vector_store: VectorStore):
         assert initialized_vector_store.get_initialized(), "Vector store must be initialized before initializing the sampler"
         self.vector_store = initialized_vector_store
@@ -26,10 +23,9 @@ class HardTripletBatchSampler(Sampler):
     def get_initialized(self) -> bool:
         return self._initialized
 
-
     # Needs to return _indexes_ of the dataset, not the actual data
     def __iter__(self) -> Iterable[int]:
-        assert self._initialized == True, "Sampler must be initialized before iterating"
+        assert self._initialized is True, "Sampler must be initialized before iterating"
 
         for _ in range(len(self)):
             batch = []
