@@ -48,13 +48,20 @@ class Reidentifier:
         mlflow.start_run()
 
     @classmethod
-    def for_training(cls, configuration : Configuration):
+    def for_training(cls, configuration: Configuration):
         reidentifier = Reidentifier._factory_built(configuration)
-        configuration.save("reidentifier_train_configuration.json")
         maybe_run = mlflow.active_run()
         if maybe_run is None:
             Reidentifier._start_mlflow_run(configuration)
-        mlflow.log_artifact("reidentifier_train_configuration.json")
+        # Get the mlflow run ID
+        run_id = mlflow.active_run().info.run_id
+
+        # Save the configuration
+        configuration.save(f"train_configuration_{run_id}.json")
+        mlflow.log_artifact(f"train_configuration_{run_id}.json")
+        # Delete local file since saved as artifact
+        os.remove(f"train_configuration_{run_id}.json")
+
         lies = reidentifier.model.build_labeled_image_embeddings(reidentifier.train_dataset, reidentifier.dataset_device)
         reidentifier.vector_store.initialize(lies)
         reidentifier.sampler.initialize(reidentifier.vector_store)
@@ -90,18 +97,22 @@ class Reidentifier:
         self.train_loader = DataLoader(self.train_dataset,
                                                         batch_size=self.configuration.train_configuration()["n_triplets"],
                                                         shuffle=True,
-                                                        collate_fn=IndexedImageTensor.collate)
+                                                        collate_fn=IndexedImageTensor.collate,
+                                                        drop_last=True)
+
         self.validation_loader = DataLoader(self.validation_dataset,
                                                              batch_size=self.configuration.train_configuration()["n_triplets"],
                                                              shuffle=False,
-                                                             collate_fn=IndexedImageTensor.collate)
+                                                             collate_fn=IndexedImageTensor.collate,
+                                                             drop_last=True)
+
         self.num_epochs = self.configuration.train_configuration()["epochs"]
 
         self.model_device = self.configuration.train_configuration()["model_device"]
-        num_known_individuals = len(set(self.train_dataset.labels))
+        self.num_known_individuals = len(set(self.train_dataset.labels))
         self.model = ReidentifyModel(configuration.model_configuration(),
                                      configuration.train_configuration(),
-                                     num_known_individuals)
+                                     self.num_known_individuals)
 
 
         self.embedding_dimension = configuration.model_configuration()["output_vector_size"]
@@ -126,8 +137,7 @@ class Reidentifier:
             mlflow.log_param("run_id", active_run.info.run_id)
 
             mlflow.log_artifact("reidentifier_train_configuration.json")
-            # TODO: params from configuration (num_classes from dataset)
-            loss_func = losses.SubCenterArcFaceLoss(num_classes=61, embedding_size=128).to(self.model.device)
+            loss_func = losses.SubCenterArcFaceLoss(num_classes=self.num_known_individuals, embedding_size=self.embedding_dimension).to(self.model.device)
             loss_optimizer = torch.optim.Adam(loss_func.parameters(), lr=1e-4)
             optimizer = optim.Adam(self.model.parameters(), lr=0.001)
             mlflow.log_param("loss_func", "SubCenterArcFaceLoss")
@@ -170,13 +180,17 @@ class Reidentifier:
                 epoch_mrr = accuracies["mean_reciprocal_rank"]
                 if epoch_mrr > best_mrr:
                     best_mrr = epoch_mrr
-                    self.model.save_model(self.artifacts_path + f"/model_{run_id}.pth")
-                    # Save the vector store
-                    self.vector_store.save(self.artifacts_path + f"/vector_store_{run_id}.pth")
+                    self._save_run(run_id)
 
                 train_end = time.time()
                 print(f"Epoch {epoch} took {train_end - train_start:.1f} seconds")
             return time.time() - start, best_mrr
+
+    def _save_run(self, run_id):
+        self.model.save_model(self.artifacts_path + f"/model_{run_id}.pth")
+        # Save the vector store
+        self.vector_store.save(self.artifacts_path + f"/vector_store_{run_id}.pth")
+
 
     def _train_all_batches(self, model : ReidentifyModel, loss_func : callable, device : torch.device, train_loader : DataLoader, optimizer, loss_optimizer, epoch:int) -> list[float]:
         #TODO: Isn't model.device superior to device as a param?

@@ -226,3 +226,20 @@ class VectorStore:
             (distances[i], self.vector_id_to_label[i], self.vector_id_to_source[i])
             for i in indices
         ]
+
+    def save(self, run_id : int):
+        faiss.write_index(self.index, f"faiss_index_{run_id}.index")
+        np.save(f"vector_id_to_label_{run_id}.npy", self.vector_id_to_label)
+        np.save(f"vector_id_to_source_{run_id}.npy", self.vector_id_to_source)
+
+
+    def load(self, run_id : int):
+        self.index = faiss.read_index(f"faiss_index_{run_id}.index")
+        self.vector_id_to_label = np.load(f"vector_id_to_label_{run_id}.npy", allow_pickle=True).item()
+        self.vector_id_to_source = np.load(f"vector_id_to_source_{run_id}.npy", allow_pickle=True).item()
+        self.vector_id_counter = len(self.vector_id_to_label)
+        self.dataset_id_to_vector_id = {v: k for k, v in self.vector_id_to_dataset_id.items()}
+        self.source_to_dataset_id = {v: k for k, v in self.vector_id_to_source.items()}
+        # TODO: Check if all needed vars are initialized. This will be used in both inference
+        # and training from a baseline, so we need to make sure that _initialized is set properly
+        self._initialized = True

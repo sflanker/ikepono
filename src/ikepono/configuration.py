@@ -58,7 +58,7 @@ class Configuration:
 
         configuration["train"] = {"epochs": 10, "learning_rate": 0.001,
                               "optimizer" : "adam", "criterion" : "SubCenterArcFaceLoss", "dataset_device": torch.device("cpu"),
-                                  "model_device" : device, "data_path": "/mnt/d/scratch_data/mantas/by_name/inner_crop/kona",
+                                  "model_device" : device, "data_path": "/mnt/d/scratch_data/mantas/train_valid/kona",
                                   "k" : 5, "n_triplets" : 32}
         return configuration
 
