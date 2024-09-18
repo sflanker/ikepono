@@ -10,17 +10,24 @@
     "output_vector_size": 128,
     "dataset_device": "cpu",
     "model_device": "cuda",
-    "artifacts_path" : "/mnt/d/scratch_data/mantas/models"
+    "artifacts_path": "/mnt/d/scratch_data/mantas/models"
   },
   "train": {
-    "epochs": 200,
+    "epochs": 2,
     "learning_rate": 0.001,
-    "optimizer" : "adam",
+    "optimizer": "adam",
     "criterion": "SubCenterArcFaceLoss",
     "dataset_device": "cpu",
     "model_device": "cuda",
-    "data_path": "/mnt/d/scratch_data/mantas/train_valid/inner_crop/kona",
+    "data_path": "/mnt/d/scratch_data/mantas/train_valid/kona",
     "k": 5,
-    "n_triplets" : 32
+    "n_triplets": 32
+  },
+  "inference": {
+    "model_weights_path" : "./test_data/weights.pth",
+    "vector_store_path" : "./test_data/faiss_index.index",
+    "id_to_manta_id_path" : "./test_data/id_to_manta_id.json",
+    "id_to_source_path" : "./test_data/id_to_source.json",
+    "manta_id_to_name_path" : "./test_data/manta_id_to_name.json"
   }
 }

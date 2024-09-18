@@ -31,7 +31,7 @@ class Reidentifier:
     def _start_mlflow_run(cls, configuration: Configuration):
         mlflow_data_dir = "../../data"
         db_path = os.path.join(mlflow_data_dir, 'mlflow.db')
-        artifacts_path = configuration.model_configuration()["artifacts_path"]
+        artifacts_path = configuration["model"]["artifacts_path"]
 
         # Set MLflow tracking URI to use SQLite
         mlflow.set_tracking_uri(f"sqlite:///{db_path}")
@@ -70,10 +70,19 @@ class Reidentifier:
     @classmethod
     def for_inference(cls, configuration : Configuration):
         reidentifier = Reidentifier(configuration)
-        raise "Not implemented"
-        # TODO: Load the model from the artifacts path
-        # TODO: Load the vector store from the artifacts path
-        # TODO: Load the vector store ID -> manta_id dictionary from the artifacts path
+        weights = configuration.inference_configuration()["weights_path"]
+        reidentifier.model.load_model(weights)
+        vector_store_index_path = configuration.inference_configuration()["vector_store_path"]
+        id_to_manta_id_path = configuration.inference_configuration()["id_to_manta_id_path"]
+        id_to_source_path = configuration.inference_configuration()["id_to_source_path"]
+        manta_id_to_name_path = configuration.inference_configuration()["manta_id_to_name_path"]
+        reidentifier.vector_store.load(
+            vector_store_index_path,
+            id_to_manta_id_path,
+            id_to_source_path,
+            manta_id_to_name_path
+        )
+        return reidentifier
 
 
     def __init__(self, configuration : Configuration):
@@ -83,42 +92,42 @@ class Reidentifier:
         self._built_from_factory = True
 
         self.configuration = configuration
-        data_root_dir = configuration.train_configuration()["data_path"]
+        data_root_dir = configuration["train"]["data_path"]
         training_dir = Path(data_root_dir) / "train"
         validation_dir = Path(data_root_dir) / "valid"
-        self.dataset_device = self.configuration.train_configuration()["dataset_device"]
+        self.dataset_device = self.configuration["train"]["dataset_device"]
         self.train_dataset = LabeledImageDataset.from_directory(training_dir,
-                                                                device=self.dataset_device, k=configuration.train_configuration()["k"])
-        self.sampler = HardTripletBatchSampler(self.train_dataset, configuration.train_configuration()["n_triplets"])
+                                                                device=self.dataset_device, k=configuration["train"]["k"])
+        self.sampler = HardTripletBatchSampler(self.train_dataset, configuration["train"]["n_triplets"])
 
         self.validation_dataset = LabeledImageDataset.from_directory(validation_dir,
-                                                                     device=self.dataset_device, k=configuration.train_configuration()["k"])
+                                                                     device=self.dataset_device, k=configuration["train"]["k"])
 
         self.train_loader = DataLoader(self.train_dataset,
-                                                        batch_size=self.configuration.train_configuration()["n_triplets"],
+                                                        batch_size=self.configuration["train"]["n_triplets"],
                                                         shuffle=True,
                                                         collate_fn=IndexedImageTensor.collate,
                                                         drop_last=True)
 
         self.validation_loader = DataLoader(self.validation_dataset,
-                                                             batch_size=self.configuration.train_configuration()["n_triplets"],
+                                                             batch_size=self.configuration["train"]["n_triplets"],
                                                              shuffle=False,
                                                              collate_fn=IndexedImageTensor.collate,
                                                              drop_last=True)
 
-        self.num_epochs = self.configuration.train_configuration()["epochs"]
+        self.num_epochs = self.configuration["train"]["epochs"]
 
-        self.model_device = self.configuration.train_configuration()["model_device"]
+        self.model_device = self.configuration["train"]["model_device"]
         self.num_known_individuals = len(set(self.train_dataset.labels))
-        self.model = ReidentifyModel(configuration.model_configuration(),
-                                     configuration.train_configuration(),
+        self.model = ReidentifyModel(configuration["model"],
+                                     configuration["train"],
                                      self.num_known_individuals)
 
 
-        self.embedding_dimension = configuration.model_configuration()["output_vector_size"]
+        self.embedding_dimension = configuration["model"]["output_vector_size"]
         self.vector_store = VectorStore(self.embedding_dimension)
 
-        self.artifacts_path = configuration.model_configuration()["artifacts_path"]
+        self.artifacts_path = configuration["model"]["artifacts_path"]
 
     def train(self) -> tuple[float, float]:
         experiment_id = self._configure_mlflow(self.configuration)
@@ -130,8 +139,8 @@ class Reidentifier:
             mlflow.end_run()
 
         with mlflow.start_run() as active_run:
-            mlflow.log_params(self.configuration.model_configuration())
-            mlflow.log_params(self.configuration.train_configuration())
+            mlflow.log_params(self.configuration["model"])
+            mlflow.log_params(self.configuration["train"])
             mlflow.log_param("total_classes", len(set(self.train_dataset.labels)))
             mlflow.log_param("num_epochs", self.num_epochs)
             mlflow.log_param("run_id", active_run.info.run_id)
@@ -144,9 +153,9 @@ class Reidentifier:
             mlflow.log_param("loss_optimizer", "Adam")
             mlflow.log_param("loss_optimizer_lr", 1e-4)
             mlflow.log_param("optimizer_lr", 0.001)
-            mlflow.log_param("n_triplets", self.configuration.train_configuration()["n_triplets"])
-            mlflow.log_param("n_batches_trainset", len(self.train_loader) / (self.configuration.train_configuration()["n_triplets"]))
-            mlflow.log_param("n_batches_validationset", len(self.validation_loader) / (self.configuration.train_configuration()["n_triplets"]))
+            mlflow.log_param("n_triplets", self.configuration["train"]["n_triplets"])
+            mlflow.log_param("n_batches_trainset", len(self.train_loader) / (self.configuration["train"]["n_triplets"]))
+            mlflow.log_param("n_batches_validationset", len(self.validation_loader) / (self.configuration["train"]["n_triplets"]))
             accuracy_calculator = AccuracyCalculator(
                 include=("precision_at_1", "mean_reciprocal_rank", "mean_average_precision_at_r"), k="max_bin_count")
             # Get the mlflow run ID
@@ -172,7 +181,7 @@ class Reidentifier:
                 mlflow.log_metric("val_loss_ratio", loss_ratio, step=epoch * batch_count)
                 print(f"Epoch {epoch} Validation Loss: {val_loss} Loss Ratio: {loss_ratio}")
 
-
+                # TODO: Profile training before any optimization. But _test_accuracy seems **slow** and could be run every n epochs.
                 accuracies = self._test_accuracy(self.train_dataset, self.validation_dataset, self.model, accuracy_calculator)
                 step = epoch * len(self.train_loader)
                 # print(f"Step {step} MRR: {accuracies['mean_reciprocal_rank']}")
@@ -189,7 +198,8 @@ class Reidentifier:
     def _save_run(self, run_id):
         self.model.save_model(self.artifacts_path + f"/model_{run_id}.pth")
         # Save the vector store
-        self.vector_store.save(self.artifacts_path + f"/vector_store_{run_id}.pth")
+        # TODO: Putting in a full path didn't work. Need to investigate and maybe use MLFlow.log_artifact as necessary
+        self.vector_store.save(f"vector_store_{run_id}.pth")
 
 
     def _train_all_batches(self, model : ReidentifyModel, loss_func : callable, device : torch.device, train_loader : DataLoader, optimizer, loss_optimizer, epoch:int) -> list[float]:

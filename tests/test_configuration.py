@@ -18,7 +18,7 @@ class ConfigurationTests(unittest.TestCase):
         assert config.configuration["model"]["dropout"] == 0.5
         assert config.configuration["model"]["backbone_output_dim"] == 512
         assert config.configuration["model"]["hidden_units"] == 512
-        assert config.configuration["train"]["epochs"] == 2
+        assert config.configuration["train"]["epochs"] == 10
         assert config.configuration["train"]["learning_rate"] == 0.001
         assert config.configuration["train"]["dataset_device"] == torch.device("cpu")
         assert config.configuration["train"]["model_device"] == torch.device("cuda") if torch.cuda.is_available() else torch.device("mps") if torch.backends.mps.is_built() else torch.device("cpu")

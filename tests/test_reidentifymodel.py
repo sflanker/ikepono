@@ -166,11 +166,11 @@ class ReidentifyModelTests(unittest.TestCase):
     def test_real_dataset(self):
         print("Running test_real_dataset. Remove this from the test suite after train debugged.")
         configuration = Configuration("test_configuration.json")
-        vector_store = VectorStore(dimension=configuration.model_configuration()["output_vector_size"])
+        vector_store = VectorStore(dimension=configuration["model"]["output_vector_size"])
 
-        data_dir = configuration.train_configuration()["data_path"]
-        k = configuration.train_configuration()["k"]
-        num_epochs = configuration.train_configuration()["epochs"]
+        data_dir = configuration["train"]["data_path"]
+        k = configuration["train"]["k"]
+        num_epochs = configuration["train"]["epochs"]
         dataset = SplittableImageDataset.from_directory(root_dir=data_dir, k=k)
         # This isn't a configuration value!
         num_classes = len(set(dataset.labels))
@@ -179,10 +179,10 @@ class ReidentifyModelTests(unittest.TestCase):
         sampler = HardTripletBatchSampler(dataset, 3)
         loader = DataLoader(dataset, batch_sampler=sampler,
                             collate_fn=IndexedImageTensor.collate)
-        vector_device = configuration.model_configuration()["dataset_device"]
+        vector_device = configuration["model"]["dataset_device"]
         print("Built loader")
 
-        model = ReidentifyModel(configuration.model_configuration(), configuration.train_configuration(), num_classes)
+        model = ReidentifyModel(configuration["model"], configuration["train"], num_classes)
         print("Built model")
         vector_store.initialize(model.build_labeled_image_embeddings(dataset, vector_device))
         sampler.initialize(vector_store)
@@ -200,7 +200,7 @@ class ReidentifyModelTests(unittest.TestCase):
     def simple_model(self):
         configuration = Configuration("test_configuration.json")
         ds = SplittableImageDatasetTests.simple_dataset()
-        embedding_size = configuration.model_configuration()["output_vector_size"]
+        embedding_size = configuration["model"]["output_vector_size"]
         vs = VectorStore(dimension=embedding_size)
 
         num_classes = len(set(ds.labels))
@@ -208,7 +208,7 @@ class ReidentifyModelTests(unittest.TestCase):
         sampler = HardTripletBatchSampler(ds, 3)
 
         loader = DataLoader(ds, batch_sampler=sampler, collate_fn=IndexedImageTensor.collate)
-        model = ReidentifyModel(configuration.model_configuration(), configuration.train_configuration(), 61)
+        model = ReidentifyModel(configuration["model"], configuration["train"], 61)
         vs.initialize(model.build_labeled_image_embeddings(ds, torch.device("cpu")))
         sampler.initialize(vs)
 
@@ -218,7 +218,7 @@ class ReidentifyModelTests(unittest.TestCase):
         attributes_expected = ["backbone_name", "pretrained", "freeze", "cut", "backbone_output_dim",
                                "output_vector_size", "dropout", "hidden_units", "device"]
         configuration = Configuration("test_configuration.json")
-        model = ReidentifyModel(configuration.model_configuration(), configuration.train_configuration(), 10)
+        model = ReidentifyModel(configuration["model"], configuration["train"], 10)
         for attribute in attributes_expected:
             assert hasattr(model, attribute), f"Expected attribute {attribute} not found in ReidentifyModel"
             assert getattr(model, attribute) is not None, f"Expected attribute {attribute} to be assigned in ReidentifyModel"

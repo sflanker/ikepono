@@ -74,10 +74,10 @@ def build_and_train(configuration):
     ])
     batch_size = 32
 
-    data_dir = configuration.train_configuration()["train_data_path"]
+    data_dir = configuration["train"]["train_data_path"]
     mlflow_data_dir = "../../data"
     db_path = os.path.join(mlflow_data_dir, 'mlflow.db')
-    artifacts_path = configuration.model_configuration()["artifacts_path"]
+    artifacts_path = configuration["model"]["artifacts_path"]
 
     # Ensure directories exist
     os.makedirs(data_dir, exist_ok=True)
@@ -103,17 +103,17 @@ def build_and_train(configuration):
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=batch_size, shuffle=True, collate_fn=_ptml_collate
     )
-    model = ReidentifyModel(configuration.model_configuration(), configuration.train_configuration(), total_classes)
+    model = ReidentifyModel(configuration["model"], configuration["train"], total_classes)
     optimizer = optim.Adam(model.parameters(), lr=0.001)
-    num_epochs = configuration.train_configuration()["epochs"]
+    num_epochs = configuration["train"]["epochs"]
 
     loss_func = losses.SubCenterArcFaceLoss(num_classes=51, embedding_size=128).to(model.device)
     loss_optimizer = torch.optim.Adam(loss_func.parameters(), lr=1e-4)
     accuracy_calculator = AccuracyCalculator(include=("precision_at_1","mean_reciprocal_rank","mean_average_precision_at_r"), k="max_bin_count")
 
     with mlflow.start_run() as active_run:
-        mlflow.log_params(configuration.model_configuration())
-        mlflow.log_params(configuration.train_configuration())
+        mlflow.log_params(configuration["model"])
+        mlflow.log_params(configuration["train"])
         mlflow.log_param("total_classes", total_classes)
         mlflow.log_param("num_epochs", num_epochs)
         mlflow.log_param("batch_size", batch_size)
