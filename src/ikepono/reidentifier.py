@@ -102,6 +102,7 @@ class Reidentifier:
 
         self.validation_dataset = LabeledImageDataset.from_directory(validation_dir,
                                                                      device=self.dataset_device, k=configuration["train"]["k"])
+        LabeledImageDataset.reconcile(self.train_dataset, self.validation_dataset)
 
         self.train_loader = DataLoader(self.train_dataset,
                                                         batch_size=self.configuration["train"]["n_triplets"],

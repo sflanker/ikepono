@@ -8,8 +8,6 @@ from PIL import Image
 from ikepono.indexedimagetensor import IndexedImageTensor
 from pathlib import Path
 
-
-# TODO: Delete this if datasets from train/ valid/ directories are solely to be used
 class LabeledImageDataset(Dataset):
 
     @classmethod
@@ -25,6 +23,19 @@ class LabeledImageDataset(Dataset):
                         full_path = Path(os.path.join(root, file))
                         image_paths.append(full_path)
         return cls(image_paths, transform, device)
+
+    @classmethod
+    def reconcile(cls, train_ds: "LabeledImageDataset", validation_ds: "LabeledImageDataset") -> None:
+        # If a label does not occur in both datasets, remove it from the larger dataset
+        train_labels = set(train_ds.labels)
+        validation_labels = set(validation_ds.labels)
+        labels_to_remove = train_labels.symmetric_difference(validation_labels)
+        if len(labels_to_remove) > 0:
+            for label in labels_to_remove:
+                if label in train_labels:
+                    train_ds.labels = train_ds.labels[train_ds.labels != label]
+                if label in validation_labels:
+                    validation_ds.labels = validation_ds.labels[validation_ds.labels != label]
 
     def __init__(self, paths, transform: xforms.Compose, train=True, device = torch.device('cpu')):
         assert len(paths) > 0, "No images found in paths"

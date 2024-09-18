@@ -198,7 +198,7 @@ class ReidentifyModelTests(unittest.TestCase):
 
 
     def simple_model(self):
-        configuration = Configuration("test_configuration.json")
+        configuration = Configuration("test_configuration.json").configuration
         ds = SplittableImageDatasetTests.simple_dataset()
         embedding_size = configuration["model"]["output_vector_size"]
         vs = VectorStore(dimension=embedding_size)
@@ -217,7 +217,7 @@ class ReidentifyModelTests(unittest.TestCase):
     def test_all_properties_assigned(self):
         attributes_expected = ["backbone_name", "pretrained", "freeze", "cut", "backbone_output_dim",
                                "output_vector_size", "dropout", "hidden_units", "device"]
-        configuration = Configuration("test_configuration.json")
+        configuration = Configuration("test_configuration.json").configuration
         model = ReidentifyModel(configuration["model"], configuration["train"], 10)
         for attribute in attributes_expected:
             assert hasattr(model, attribute), f"Expected attribute {attribute} not found in ReidentifyModel"
