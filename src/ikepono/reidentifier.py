@@ -31,7 +31,7 @@ class Reidentifier:
     def _start_mlflow_run(cls, configuration: Configuration):
         mlflow_data_dir = "../../data"
         db_path = os.path.join(mlflow_data_dir, 'mlflow.db')
-        artifacts_path = configuration["model"]["artifacts_path"]
+        artifacts_path = configuration.configuration["model"]["artifacts_path"]
 
         # Set MLflow tracking URI to use SQLite
         mlflow.set_tracking_uri(f"sqlite:///{db_path}")
@@ -92,43 +92,43 @@ class Reidentifier:
         self._built_from_factory = True
 
         self.configuration = configuration
-        data_root_dir = configuration["train"]["data_path"]
+        data_root_dir = configuration.configuration["train"]["data_path"]
         training_dir = Path(data_root_dir) / "train"
         validation_dir = Path(data_root_dir) / "valid"
-        self.dataset_device = self.configuration["train"]["dataset_device"]
+        self.dataset_device = self.configuration.configuration["train"]["dataset_device"]
         self.train_dataset = LabeledImageDataset.from_directory(training_dir,
-                                                                device=self.dataset_device, k=configuration["train"]["k"])
-        self.sampler = HardTripletBatchSampler(self.train_dataset, configuration["train"]["n_triplets"])
+                                                                device=self.dataset_device, k=configuration.configuration["train"]["k"])
+        self.sampler = HardTripletBatchSampler(self.train_dataset, configuration.configuration["train"]["n_triplets"])
 
         self.validation_dataset = LabeledImageDataset.from_directory(validation_dir,
-                                                                     device=self.dataset_device, k=configuration["train"]["k"])
+                                                                     device=self.dataset_device, k=configuration.configuration["train"]["k"])
         LabeledImageDataset.reconcile(self.train_dataset, self.validation_dataset)
 
         self.train_loader = DataLoader(self.train_dataset,
-                                                        batch_size=self.configuration["train"]["n_triplets"],
+                                                        batch_size=self.configuration.configuration["train"]["n_triplets"],
                                                         shuffle=True,
                                                         collate_fn=IndexedImageTensor.collate,
                                                         drop_last=True)
 
         self.validation_loader = DataLoader(self.validation_dataset,
-                                                             batch_size=self.configuration["train"]["n_triplets"],
+                                                             batch_size=self.configuration.configuration["train"]["n_triplets"],
                                                              shuffle=False,
                                                              collate_fn=IndexedImageTensor.collate,
                                                              drop_last=True)
 
-        self.num_epochs = self.configuration["train"]["epochs"]
+        self.num_epochs = self.configuration.configuration["train"]["epochs"]
 
-        self.model_device = self.configuration["train"]["model_device"]
+        self.model_device = self.configuration.configuration["train"]["model_device"]
         self.num_known_individuals = len(set(self.train_dataset.labels))
-        self.model = ReidentifyModel(configuration["model"],
-                                     configuration["train"],
+        self.model = ReidentifyModel(self.configuration.configuration["model"],
+                                     self.configuration.configuration["train"],
                                      self.num_known_individuals)
 
 
-        self.embedding_dimension = configuration["model"]["output_vector_size"]
+        self.embedding_dimension = configuration.configuration["model"]["output_vector_size"]
         self.vector_store = VectorStore(self.embedding_dimension)
 
-        self.artifacts_path = configuration["model"]["artifacts_path"]
+        self.artifacts_path = configuration.configuration["model"]["artifacts_path"]
 
     def train(self) -> tuple[float, float]:
         experiment_id = self._configure_mlflow(self.configuration)
@@ -140,8 +140,8 @@ class Reidentifier:
             mlflow.end_run()
 
         with mlflow.start_run() as active_run:
-            mlflow.log_params(self.configuration["model"])
-            mlflow.log_params(self.configuration["train"])
+            mlflow.log_params(self.configuration.configuration["model"])
+            mlflow.log_params(self.configuration.configuration["train"])
             mlflow.log_param("total_classes", len(set(self.train_dataset.labels)))
             mlflow.log_param("num_epochs", self.num_epochs)
             mlflow.log_param("run_id", active_run.info.run_id)
@@ -154,9 +154,9 @@ class Reidentifier:
             mlflow.log_param("loss_optimizer", "Adam")
             mlflow.log_param("loss_optimizer_lr", 1e-4)
             mlflow.log_param("optimizer_lr", 0.001)
-            mlflow.log_param("n_triplets", self.configuration["train"]["n_triplets"])
-            mlflow.log_param("n_batches_trainset", len(self.train_loader) / (self.configuration["train"]["n_triplets"]))
-            mlflow.log_param("n_batches_validationset", len(self.validation_loader) / (self.configuration["train"]["n_triplets"]))
+            mlflow.log_param("n_triplets", self.configuration.configuration["train"]["n_triplets"])
+            mlflow.log_param("n_batches_trainset", len(self.train_loader) / (self.configuration.configuration["train"]["n_triplets"]))
+            mlflow.log_param("n_batches_validationset", len(self.validation_loader) / (self.configuration.configuration["train"]["n_triplets"]))
             accuracy_calculator = AccuracyCalculator(
                 include=("precision_at_1", "mean_reciprocal_rank", "mean_average_precision_at_r"), k="max_bin_count")
             # Get the mlflow run ID

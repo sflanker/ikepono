@@ -28,7 +28,8 @@ class ReidentifierTests(unittest.TestCase):
         self.assertTrue(best_mrr > 0.0)
 
     def test_inference(self ):
-        assert False, "Not implemented"
+        reidentifier = Reidentifier.for_inference(Configuration("test_configuration.json"))
+        assert reidentifier is not None
 
 if __name__ == '__main__':
     unittest.main()

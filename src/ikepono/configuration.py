@@ -78,8 +78,8 @@ class Configuration:
         return configuration
 
     def save(self, config_file : Path):
-        dataset_device_name = self.train_configuration()["dataset_device"].type
-        model_device_name = self.train_configuration()["model_device"].type
+        dataset_device_name = self.configuration["train"]["dataset_device"].type
+        model_device_name = self.configuration["train"]["model_device"].type
         self.configuration["train"]["dataset_device"] = dataset_device_name
         self.configuration["train"]["model_device"] = model_device_name
         with open(config_file, 'w') as f:
