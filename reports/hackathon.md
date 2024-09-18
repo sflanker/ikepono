@@ -21,7 +21,7 @@ Understanding the dynamics of the local population is important for both science
 
 ## ML for Re-identifying Mantas
 
-Individual Reef Mantas (*M. alfredi*) have unigue markings. These markings stay consistent over the life of the ray. 
+Individual Reef Mantas (*M. alfredi*) have unique markings. These markings stay consistent over the life of the ray. 
 
 These markings can be used to identify individual mantas:
 
@@ -29,7 +29,7 @@ These markings can be used to identify individual mantas:
 
 "Low K-Shot" learning allow mantas to be reidentified from as few as 5 reference photos. 
 
-In our dataset of 99 individuals with more than 5 photos from the Kona, Big Island, population, even our quickly-trained model returns the correct manta with a Mean Reciprocal Rank of >0.8 (meaning that our first prediction is right at least 4 times as often as not). <small>(k >= 5, n = 99, MRR = .82; k >= 8, n = 55, MRR = 1.0)</small>
+<!-- In our dataset of 99 individuals with more than 5 photos from the Kona, Big Island, population, even our quickly-trained model returns the correct manta with a Mean Reciprocal Rank of >0.8 (meaning that our first prediction is right at least 4 times as often as not). <small>(k >= 5, n = 99, MRR = .82; k >= 8, n = 55, MRR = 1.0)</small> -->
 
 ---
 
@@ -54,7 +54,7 @@ v1 models developed 2023-2024 by L. O'Brien. v2 modeling began in Aug 2024.
 
 (Alphabetical by last name?)
 
-- Larry O'Brien : ML Models, System Architecture
+- Larry O'Brien : ML Models & Pipeline
 - tk : tk 
 - tk : tk 
 - tk : tk 
@@ -73,6 +73,8 @@ Our system is backed by a 3-model pipeline.
 
 ![pipeline](media/pipeline.png)
 
+---
+
 # Model Details
 
 Manta Detection: ResNet18 fine-tuned for mantas
@@ -86,13 +88,19 @@ Re-identification:
 - FAISS vector database
 
 Open-source: MIT License
+
 Source code: https://github.com/lobrien/ikepono
-Weights: Available directly from lobrien@knowing.net (HuggingFace soon)
+
+Weights: Contact lobrien@knowing.net 
+
 ---
+
 # Longer-term goals
 
 Validation from MPRF on Kona population
+
 Apply to Maui population
+
 Outreach to researchers in other populations
 
 Permanent hosting
@@ -102,13 +110,14 @@ Permanent hosting
 - Cetaceans
 - Sea Turtles
 - Zebras 
+- etc.
 
 
 
 ---
 # Acknowledgements
 
-Training data courtesy of:
+Training data property of:
 
     - Manta Pacific Research Foundation
     - Mark Deakos
