@@ -78,8 +78,9 @@ class Configuration:
         return configuration
 
     def save(self, config_file : Path):
-        dataset_device_name = self.configuration["train"]["dataset_device"].type
-        model_device_name = self.configuration["train"]["model_device"].type
+        # Check if the device is a torch device and, if so, save it's name
+        dataset_device_name = self.configuration["train"]["dataset_device"].type if isinstance(self.configuration["train"]["dataset_device"], torch.device) else self.configuration["train"]["dataset_device"]
+        model_device_name = self.configuration["train"]["model_device"].type if isinstance(self.configuration["train"]["model_device"], torch.device) else self.configuration["train"]["model_device"]
         self.configuration["train"]["dataset_device"] = dataset_device_name
         self.configuration["train"]["model_device"] = model_device_name
         with open(config_file, 'w') as f:

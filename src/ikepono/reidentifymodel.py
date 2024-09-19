@@ -91,6 +91,9 @@ class ReidentifyModel(nn.Module):
         assert dataloader.batch_sampler.get_initialized() == True
         assert vector_store.get_initialized() == True
 
+        # Make sure label counts all match up
+        assert len(vector_store.labels) == len(dataloader.dataset.idx_to_label)
+
         # Training loop
         best_loss = float('inf')
 
@@ -112,6 +115,9 @@ class ReidentifyModel(nn.Module):
         maybe_run = mlflow.active_run()
         if maybe_run is not None:
             mlflow.log_artifact(filename)
+
+    def load_weights(self, filename : str):
+        self.load_state_dict(torch.load(filename))
 
 
     def build_labeled_image_embeddings(self, dataset : LabeledImageDataset, device) -> np.ndarray[LabeledImageEmbedding]:

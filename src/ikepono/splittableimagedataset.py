@@ -7,13 +7,13 @@ import os
 from PIL import Image
 from collections import defaultdict
 from ikepono.indexedimagetensor import IndexedImageTensor
-from ikepono.deprecated import deprecated
+from deprecated import deprecated
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 
 
 # TODO: Delete this if datasets from train/ valid/ directories are solely to be used
-@deprecated("Use LabeledImageDataset instead. Better for analysis.")
+@deprecated(reason="Use LabeledImageDataset instead. Better for analysis.")
 class SplittableImageDataset(Dataset):
     @classmethod
     def from_directory(cls, root_dir, transform=None, train=True, test_size=0.2, random_state=42, k=5, device = torch.device('cpu')) -> "SplittableImageDataset":
@@ -126,8 +126,7 @@ class SplittableImageDataset(Dataset):
             initial_image.close()
         # Move it on to configuration["dataset_device"]
         tensor_image = tensor_image.to(self.device)
-        if label_idx > 60:
-            print("Boom")
+
         return IndexedImageTensor(image=tensor_image, label_idx=label_idx, source=img_path)
 
     @staticmethod

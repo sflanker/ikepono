@@ -2,6 +2,7 @@ import time
 import torch
 from torch import optim
 from torch.utils.data import DataLoader
+from PIL import Image
 
 import mlflow
 import numpy as np
@@ -70,14 +71,19 @@ class Reidentifier:
     @classmethod
     def for_inference(cls, configuration : Configuration):
         reidentifier = Reidentifier(configuration)
-        weights = configuration.inference_configuration()["weights_path"]
-        reidentifier.model.load_model(weights)
-        vector_store_index_path = configuration.inference_configuration()["vector_store_path"]
-        id_to_manta_id_path = configuration.inference_configuration()["id_to_manta_id_path"]
-        id_to_source_path = configuration.inference_configuration()["id_to_source_path"]
-        manta_id_to_name_path = configuration.inference_configuration()["manta_id_to_name_path"]
+        config_inference = configuration.configuration["inference"]
+        weights = config_inference["model_weights_path"]
+        reidentifier.model.load_weights(weights)
+        vector_store_index_path = config_inference["vector_store_path"]
+        base_index_path = config_inference["base_index_path"]
+        vectors_json_path = config_inference["vectors_json_path"]
+        id_to_manta_id_path = config_inference["id_to_manta_id_path"]
+        id_to_source_path = config_inference["id_to_source_path"]
+        manta_id_to_name_path = config_inference["manta_id_to_name_path"]
         reidentifier.vector_store.load(
             vector_store_index_path,
+            base_index_path,
+            vectors_json_path,
             id_to_manta_id_path,
             id_to_source_path,
             manta_id_to_name_path
@@ -100,8 +106,9 @@ class Reidentifier:
                                                                 device=self.dataset_device, k=configuration.configuration["train"]["k"])
         self.sampler = HardTripletBatchSampler(self.train_dataset, configuration.configuration["train"]["n_triplets"])
 
+        # k = 1 for validation (although that's not a hard requirement)
         self.validation_dataset = LabeledImageDataset.from_directory(validation_dir,
-                                                                     device=self.dataset_device, k=configuration.configuration["train"]["k"])
+                                                                     device=self.dataset_device, k=1)
         LabeledImageDataset.reconcile(self.train_dataset, self.validation_dataset)
 
         self.train_loader = DataLoader(self.train_dataset,
@@ -134,6 +141,12 @@ class Reidentifier:
         experiment_id = self._configure_mlflow(self.configuration)
         num_epochs = self.num_epochs
 
+        # Confirm labels all match
+        assert set(self.train_dataset.labels) == set(self.validation_dataset.labels), "Train and Validation datasets have different labels"
+        # Vector store indices should match the labels
+        assert len(self.vector_store.all_labels()) == len(self.train_dataset.labels), f"Vector store and datasets have different lengths vs {len(self.vector_store.all_labels())} != ds {len(self.train_dataset.labels)}"
+        assert len(self.validation_loader) > 0, "Validation loader is empty"
+
         # Check if mlflow has an active run. If so, stop it
         maybe_run = mlflow.active_run()
         if maybe_run is not None:
@@ -146,7 +159,11 @@ class Reidentifier:
             mlflow.log_param("num_epochs", self.num_epochs)
             mlflow.log_param("run_id", active_run.info.run_id)
 
+            # Save configuration to json and artifact it
+            self.configuration.save("reidentifier_train_configuration.json")
             mlflow.log_artifact("reidentifier_train_configuration.json")
+            os.remove("reidentifier_train_configuration.json")
+
             loss_func = losses.SubCenterArcFaceLoss(num_classes=self.num_known_individuals, embedding_size=self.embedding_dimension).to(self.model.device)
             loss_optimizer = torch.optim.Adam(loss_func.parameters(), lr=1e-4)
             optimizer = optim.Adam(self.model.parameters(), lr=0.001)
@@ -165,6 +182,9 @@ class Reidentifier:
             # Get the mlflow run name
             run_name = active_run.info.run_name
             mlflow.log_param("run_name", run_name)
+
+            k = self.configuration.configuration["train"]["k"]
+            print(f"Starting training run {run_name} with {num_epochs} epochs for {len(self.train_dataset.labels)} individuals, k >= {k} P{len(self.train_dataset)} training images and {len(self.validation_dataset)} validation images")
 
             start = time.time()
             best_mrr = 0.0
@@ -280,3 +300,23 @@ class Reidentifier:
         return experiment_id
 
 
+    def identify(self, query_image_path: Path) -> str:
+        initial_image = Image.open(query_image_path)
+        pil_image = initial_image.convert('RGB')
+        try:
+            xform = LabeledImageDataset.standard_transform_for_inference()
+            tensor_image = xform(pil_image)
+        except Exception as e:
+            print(f"Error processing {query_image_path}: {e}")
+            raise
+        finally:
+            initial_image.close()
+        # Move it on to configuration["model"]["device"]
+        model_device = self.configuration.configuration["model"]["model_device"]
+        tensor_image = tensor_image.to(model_device)
+        tensor_image = tensor_image.unsqueeze(0)
+        embeddings = self.model(tensor_image).to("cpu").detach().numpy()
+        embedding = embeddings[0]
+        # Find the nearest neighbor
+        results = self.vector_store.search(embedding, 10)
+        return results

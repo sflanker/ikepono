@@ -1,7 +1,10 @@
 import faiss
+import json
+import mlflow
 import numpy as np
 from ikepono.labeledimageembedding import LabeledImageEmbedding
 from pathlib import Path
+import os
 from typing import Iterable as Iter
 from typing import List, Tuple, Dict, Any
 
@@ -23,7 +26,7 @@ class VectorStore:
         self._initialized: bool = False
 
     def _add_embedding(
-        self, embedding: np.ndarray, label: str, source: Path, dataset_index: np.int64
+        self, embedding: np.ndarray, label: str, source: Path, dataset_index: int
     ) -> None:
         assert isinstance(
             embedding, np.ndarray
@@ -31,10 +34,10 @@ class VectorStore:
         assert isinstance(label, str), f"Expected str, got {type(label)}"
         assert isinstance(source, Path), f"Expected Path, got {type(source)}"
         assert isinstance(
-            dataset_index, np.int64
+            dataset_index, int
         ), f"Expected int64, got {type(dataset_index)}"
 
-        vector_id: int = self.vector_id_counter
+        vector_id: int = int(self.vector_id_counter)
         # Note that FAISS is CPU, since FAISS GPU is overkill for mere hundreds of vectors
         vector_array = np.array([embedding]).astype("float32")
         if label not in self.label_to_dataset_ids:
@@ -71,7 +74,7 @@ class VectorStore:
     def _add_labeled_image_embeddings(self, livs: Iter[LabeledImageEmbedding]) -> None:
         for liv in livs:
             self._add_embedding(
-                liv.embedding, liv.label, liv.source, np.int64(liv.dataset_index)
+                liv.embedding, liv.label, liv.source, liv.dataset_index
             )
 
     def update_or_add_vector(
@@ -228,18 +231,77 @@ class VectorStore:
         ]
 
     def save(self, run_id : int):
-        faiss.write_index(self.index, f"faiss_index_{run_id}.index")
-        np.save(f"vector_id_to_label_{run_id}.npy", self.vector_id_to_label)
-        np.save(f"vector_id_to_source_{run_id}.npy", self.vector_id_to_source)
+        faiss.write_index(self.index, f"faiss_index.index")
+        faiss.write_index(self.base_index, f"faiss_base_index.index")
+        with open(f"vectors.json", "w") as f:
+            json.dump(self.vector_store, f, cls=VectorStoreEncoder)
 
+        # Save the mappings as JSON
+        with open(f"vector_id_to_dataset_id.json", "w") as f:
+            json.dump(self.vector_id_to_dataset_id, f, cls=VectorStoreEncoder)
+        with open(f"vector_id_to_source.json", "w") as f:
+            json.dump(self.vector_id_to_source, f, cls=VectorStoreEncoder)
+        dataset_int_to_label = {int(k): v for k, v in self.dataset_id_to_label.items()}
+        with open(f"dataset_id_to_label.json", "w") as f:
+            json.dump(dataset_int_to_label, f, cls=VectorStoreEncoder)
+            mlflow.log_artifact("vector_id_to_source.json")
+        mlflow.log_artifact("faiss_index.index")
+        mlflow.log_artifact("vector_id_to_dataset_id.json")
+        os.remove("faiss_index.index")
+        mlflow.log_artifact("dataset_id_to_label.json")
+        os.remove("vector_id_to_dataset_id.json")
+        os.remove("vector_id_to_source.json")
+        os.remove("dataset_id_to_label.json")
 
-    def load(self, run_id : int):
-        self.index = faiss.read_index(f"faiss_index_{run_id}.index")
-        self.vector_id_to_label = np.load(f"vector_id_to_label_{run_id}.npy", allow_pickle=True).item()
-        self.vector_id_to_source = np.load(f"vector_id_to_source_{run_id}.npy", allow_pickle=True).item()
-        self.vector_id_counter = len(self.vector_id_to_label)
-        self.dataset_id_to_vector_id = {v: k for k, v in self.vector_id_to_dataset_id.items()}
+    def load(self, faiss_index_path,
+             faiss_base_index_path,
+             vectors_json_path,
+             vector_id_to_dataset_id_path,
+             vector_id_to_source_path,
+             dataset_id_to_label_path):
+        self.index = faiss.read_index(faiss_index_path)
+        self.base_index = faiss.read_index(faiss_base_index_path)
+
+        n_vectors = self.index.ntotal
+        faiss_dim = self.index.d
+        assert(n_vectors > 0, "No vectors in the index")
+        assert(faiss_dim > 0, "No dimensions in the index")
+        vs = self.all_vectors()
+
+        with open(vectors_json_path) as f:
+            self.vector_store = json.load(f, object_hook=int_key_decoder)
+        with open(vector_id_to_dataset_id_path) as f:
+            self.vector_id_to_dataset_id = json.load(f, object_hook=int_key_decoder)
+        with open(vector_id_to_source_path) as f:
+            self.vector_id_to_source = json.load(f, object_hook=int_key_decoder)
+        with open(dataset_id_to_label_path) as f:
+            self.dataset_id_to_label = json.load(f, object_hook=int_key_decoder)
+
+        self.dataset_id_to_vector_id = { int(v): int(k) for k, v in self.vector_id_to_dataset_id.items()}
         self.source_to_dataset_id = {v: k for k, v in self.vector_id_to_source.items()}
+
+        self.vector_id_to_label = {self.dataset_id_to_vector_id[k]: v for k, v in self.dataset_id_to_label.items()}
+        self.vector_id_counter = len(self.vector_id_to_label)
+        self.label_to_dataset_ids = {v:k for k, v in self.dataset_id_to_label.items()}
+
         # TODO: Check if all needed vars are initialized. This will be used in both inference
         # and training from a baseline, so we need to make sure that _initialized is set properly
         self._initialized = True
+
+class VectorStoreEncoder(json.JSONEncoder):
+    def default(self, obj):
+        try:
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()
+            if isinstance(obj, Path):
+                return str(obj)
+            if isinstance(obj, integer):
+                return int(obj)
+            return super().default(obj)
+        except TypeError:
+            return str(obj)
+
+def int_key_decoder(obj):
+    if all(k.isdigit() for k in obj.keys()):
+        return {int(k): v for k, v in obj.items()}
+    return obj
