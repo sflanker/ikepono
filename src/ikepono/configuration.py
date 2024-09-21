@@ -22,6 +22,7 @@ class Configuration:
     def validate(configuration):
         assert "model" in configuration, "model configuration is missing"
         assert "train" in configuration, "train configuration is missing"
+        assert "db" in configuration, "db configuration is missing"
 
         assert "epochs" in configuration["train"], "epochs is missing from train configuration"
         assert "learning_rate" in configuration["train"], "learning_rate is missing from train configuration"
@@ -44,7 +45,7 @@ class Configuration:
         assert "model_device" in configuration["model"], "model device is missing from model configuration"
         assert "artifacts_path" in configuration["model"], "artifacts path is missing from model configuration"
 
-        assert 2 == len(configuration), "Configuration should have exactly two keys: model and train"
+        assert 3 == len(configuration), "Configuration should have exactly two keys: model and train"
         assert 9 == len(configuration["train"]), f"Train configuration should have exactly 9 keys, not {len(configuration['train'])}: epochs, learning_rate, optimizer, criterion, dataset_device, model_device, train_data_path, k, n_triplets"
         assert 11 == len(configuration["model"]), "Model configuration should have exactly 10 keys: backbone, pretrained, freeze, cut, dropout, backbone_output_dim, hidden_units, output_vector_size, dataset_device, model_device, artifacts_path"
 
@@ -60,6 +61,7 @@ class Configuration:
                               "optimizer" : "adam", "criterion" : "SubCenterArcFaceLoss", "dataset_device": torch.device("cpu"),
                                   "model_device" : device, "data_path": "/mnt/d/scratch_data/mantas/train_valid/kona",
                                   "k" : 5, "n_triplets" : 32}
+        configuration["db"] = {"path": "./data"}
         return configuration
 
     def load(self, config_file : Path):
@@ -80,3 +82,6 @@ class Configuration:
 
     def model_configuration(self):
         return self.configuration["model"]
+
+    def db_configuration(self):
+        return self.configuration["db"] if "db" in self.configuration else ({})

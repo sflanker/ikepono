@@ -75,8 +75,8 @@ def build_and_train(configuration):
     batch_size = 32
 
     data_dir = configuration.train_configuration()["train_data_path"]
-    mlflow_data_dir = "../../data"
-    db_path = os.path.join(mlflow_data_dir, 'mlflow.db')
+    db_dir = configuration.db_configuration()["path"]
+    db_path = os.path.join(db_dir, 'mlflow.db')
     artifacts_path = configuration.model_configuration()["artifacts_path"]
 
     # Ensure directories exist

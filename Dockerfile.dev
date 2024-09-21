@@ -1,0 +1,22 @@
+FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
+
+RUN ln -sf /usr/share/zoneinfo/GMT /etc/localtime
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y python3.11 pipx && \
+    dpkg-reconfigure --frontend noninteractive tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pipx install poetry
+
+WORKDIR /app
+
+ENV PATH="/root/.local/bin:${PATH}"
+ENV SHELL=/usr/bin/bash
+
+RUN ln -s /usr/bin/python3.11 /usr/local/bin/python
+RUN ln -s /usr/bin/python3.11 /usr/local/bin/python3.11
+RUN poetry config virtualenvs.path /app/.venv
+
+# ENTRYPOINT [ "poetry", "shell" ]
+ENTRYPOINT [ "/usr/bin/bash", "-c", "poetry env use python3.11; exec poetry shell" ]
+# ENTRYPOINT [ "/usr/bin/bash", "-c", "poetry env use /app/.venv/bin/python3; exec poetry shell" ]

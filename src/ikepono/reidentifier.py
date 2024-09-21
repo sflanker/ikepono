@@ -29,8 +29,8 @@ class Reidentifier:
 
     @classmethod
     def _start_mlflow_run(cls, configuration: Configuration):
-        mlflow_data_dir = "../../data"
-        db_path = os.path.join(mlflow_data_dir, 'mlflow.db')
+        db_dir = configuration.db_configuration()["path"]
+        db_path = os.path.join(db_dir, 'mlflow.db')
         artifacts_path = configuration.model_configuration()["artifacts_path"]
 
         # Set MLflow tracking URI to use SQLite
@@ -136,6 +136,7 @@ class Reidentifier:
             mlflow.log_param("num_epochs", self.num_epochs)
             mlflow.log_param("run_id", active_run.info.run_id)
 
+            # TODO: fix hardocded path sadface
             mlflow.log_artifact("reidentifier_train_configuration.json")
             loss_func = losses.SubCenterArcFaceLoss(num_classes=self.num_known_individuals, embedding_size=self.embedding_dimension).to(self.model.device)
             loss_optimizer = torch.optim.Adam(loss_func.parameters(), lr=1e-4)
@@ -251,8 +252,8 @@ class Reidentifier:
 
     def _configure_mlflow(self, configuration: Configuration):
         #TODO: This should be controllged by the configuration
-        mlflow_data_dir = "../../data"
-        db_path = os.path.join(mlflow_data_dir, 'mlflow.db')
+        db_dir = configuration.db_configuration()["path"]
+        db_path = os.path.join(db_dir, 'mlflow.db')
         artifacts_path = self.artifacts_path
         # Set MLflow tracking URI to use SQLite
         mlflow.set_tracking_uri(f"sqlite:///{db_path}")
